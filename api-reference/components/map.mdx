@@ -1,0 +1,266 @@
+---
+title: Map
+description: Component to render a Google Map with full control over camera and options
+---
+
+# Map
+
+The `Map` component renders a Google Map. It must be placed inside an `<APIProvider>` component.
+
+The map supports both controlled and uncontrolled modes for camera parameters (center, zoom, heading, tilt).
+
+## Usage
+
+```tsx
+import {APIProvider, Map} from '@vis.gl/react-google-maps';
+
+const App = () => (
+  <APIProvider apiKey={process.env.GOOGLE_MAPS_API_KEY}>
+    <Map 
+      zoom={10} 
+      center={{lat: 53.54992, lng: 10.00678}}
+      mapId="YOUR_MAP_ID"
+    />
+  </APIProvider>
+);
+```
+
+<Note>
+  By default, the map has `width: 100%; height: 100%;` styling. Make sure the parent element has a defined size.
+</Note>
+
+## Props
+
+### Camera Control
+
+<ParamField path="center" type="google.maps.LatLngLiteral">
+  Coordinates for the center of the map.
+  
+  Example: `{lat: 37.7749, lng: -122.4194}`
+</ParamField>
+
+<ParamField path="zoom" type="number">
+  Zoom level (0-22). Higher values show more detail.
+  
+  - `1`: World
+  - `5`: Continent
+  - `10`: City
+  - `15`: Streets
+  - `20`: Buildings
+</ParamField>
+
+<ParamField path="heading" type="number">
+  Map heading in degrees, measured clockwise from north.
+  
+  Range: 0-360
+</ParamField>
+
+<ParamField path="tilt" type="number">
+  Tilt angle in degrees from the viewport plane.
+  
+  Range varies by zoom level (0-67.5 degrees max)
+</ParamField>
+
+<ParamField path="defaultCenter" type="google.maps.LatLngLiteral">
+  Initial center for uncontrolled mode.
+</ParamField>
+
+<ParamField path="defaultZoom" type="number">
+  Initial zoom for uncontrolled mode.
+</ParamField>
+
+<ParamField path="defaultHeading" type="number">
+  Initial heading for uncontrolled mode.
+</ParamField>
+
+<ParamField path="defaultTilt" type="number">
+  Initial tilt for uncontrolled mode.
+</ParamField>
+
+<ParamField path="defaultBounds" type="google.maps.LatLngBoundsLiteral & { padding?: number | google.maps.Padding }">
+  Initial bounds to display. Alternative to defaultCenter/defaultZoom.
+  
+  Example: 
+  ```tsx
+  defaultBounds={{
+    north: 37.8,
+    south: 37.7,
+    east: -122.3,
+    west: -122.5,
+    padding: 50
+  }}
+  ```
+</ParamField>
+
+### Map Configuration
+
+<ParamField path="id" type="string">
+  Identifier for this map. Required when using multiple maps with `useMap()` hook.
+</ParamField>
+
+<ParamField path="mapId" type="string">
+  Cloud-based Map ID for custom styling.
+  
+  [Get a Map ID](https://developers.google.com/maps/documentation/get-map-id)
+</ParamField>
+
+<ParamField path="colorScheme" type="ColorScheme">
+  Color scheme: `'LIGHT'`, `'DARK'`, or `'FOLLOW_SYSTEM'`
+  
+  Import `ColorScheme` from `'@vis.gl/react-google-maps'`
+</ParamField>
+
+<ParamField path="renderingType" type="RenderingType">
+  Rendering type: `'VECTOR'` or `'RASTER'`
+  
+  Import `RenderingType` from `'@vis.gl/react-google-maps'`
+</ParamField>
+
+<ParamField path="style" type="React.CSSProperties">
+  Additional CSS styles for the map container.
+</ParamField>
+
+<ParamField path="className" type="string">
+  CSS class name for the map container.
+</ParamField>
+
+<ParamField path="controlled" type="boolean">
+  Enable externally controlled mode. Disables all map controls and gestures.
+  
+  Default: `false`
+</ParamField>
+
+<ParamField path="reuseMaps" type="boolean">
+  Enable map instance caching to reduce API calls.
+  
+  Default: `false`
+</ParamField>
+
+### Map Options
+
+The Map component accepts all [google.maps.MapOptions](https://developers.google.com/maps/documentation/javascript/reference/map#MapOptions) as props:
+
+<ParamField path="mapTypeId" type="string">
+  Map type: `'roadmap'`, `'satellite'`, `'hybrid'`, or `'terrain'`
+</ParamField>
+
+<ParamField path="disableDefaultUI" type="boolean">
+  Disable all default UI controls.
+</ParamField>
+
+<ParamField path="gestureHandling" type="string">
+  Gesture handling: `'cooperative'`, `'greedy'`, `'none'`, or `'auto'`
+</ParamField>
+
+<ParamField path="zoomControl" type="boolean">
+  Show zoom control.
+</ParamField>
+
+<ParamField path="mapTypeControl" type="boolean">
+  Show map type control.
+</ParamField>
+
+<ParamField path="streetViewControl" type="boolean">
+  Show street view control.
+</ParamField>
+
+<ParamField path="fullscreenControl" type="boolean">
+  Show fullscreen control.
+</ParamField>
+
+### Events
+
+<ParamField path="onCameraChanged" type="(event: MapCameraChangedEvent) => void">
+  Fired when camera position changes. Event contains `center`, `zoom`, `heading`, `tilt`, and `bounds`.
+</ParamField>
+
+<ParamField path="onClick" type="(event: MapMouseEvent) => void">
+  Fired when the map is clicked. Event contains `latLng` and optional `placeId`.
+</ParamField>
+
+<ParamField path="onDrag" type="(event: MapEvent) => void">
+  Fired repeatedly while the map is being dragged.
+</ParamField>
+
+<ParamField path="onDragStart" type="(event: MapEvent) => void">
+  Fired when dragging starts.
+</ParamField>
+
+<ParamField path="onDragEnd" type="(event: MapEvent) => void">
+  Fired when dragging ends.
+</ParamField>
+
+<ParamField path="onIdle" type="(event: MapEvent) => void">
+  Fired when the map becomes idle after panning or zooming.
+</ParamField>
+
+<ParamField path="onZoomChanged" type="(event: MapCameraChangedEvent) => void">
+  Fired when zoom level changes.
+</ParamField>
+
+<ParamField path="onBoundsChanged" type="(event: MapCameraChangedEvent) => void">
+  Fired when the viewport bounds change.
+</ParamField>
+
+## Controlled vs Uncontrolled
+
+### Uncontrolled Mode
+
+Use `default*` props to set initial values. The map manages its own state:
+
+```tsx
+<Map 
+  defaultCenter={{lat: 40.7, lng: -74}} 
+  defaultZoom={12}
+/>
+```
+
+### Controlled Mode
+
+Use regular props and update them via events:
+
+```tsx
+const [cameraProps, setCameraProps] = useState({
+  center: {lat: 40.7, lng: -74},
+  zoom: 12
+});
+
+<Map 
+  {...cameraProps}
+  onCameraChanged={(ev) => setCameraProps(ev.detail)}
+/>
+```
+
+### Externally Controlled Mode
+
+Set `controlled={true}` to disable all user interaction:
+
+```tsx
+<Map 
+  center={center}
+  zoom={zoom}
+  controlled={true}
+/>
+```
+
+## Example with Markers
+
+```tsx
+import {APIProvider, Map, AdvancedMarker} from '@vis.gl/react-google-maps';
+
+const MapWithMarkers = () => (
+  <APIProvider apiKey={process.env.GOOGLE_MAPS_API_KEY}>
+    <Map 
+      mapId="YOUR_MAP_ID"
+      defaultCenter={{lat: 37.7749, lng: -122.4194}}
+      defaultZoom={13}
+    >
+      <AdvancedMarker position={{lat: 37.7749, lng: -122.4194}} />
+    </Map>
+  </APIProvider>
+);
+```
+
+## Related Hooks
+
+- [`useMap()`](/api-reference/hooks/use-map) - Access the map instance from child components

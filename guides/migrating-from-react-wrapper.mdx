@@ -1,0 +1,358 @@
+---
+title: 'Migrating from @googlemaps/react-wrapper'
+description: 'Seamlessly migrate from @googlemaps/react-wrapper to React Google Maps with a drop-in replacement'
+---
+
+The [`@googlemaps/react-wrapper`](https://www.npmjs.com/package/@googlemaps/react-wrapper) library provides a minimal wrapper for loading the Maps JavaScript API in a React application. You can migrate to React Google Maps seamlessly using a polyfill for the `<Wrapper>` component.
+
+## Key Differences
+
+Understand the main difference between the two libraries:
+
+<Tabs>
+  <Tab title="@googlemaps/react-wrapper">
+    **Wrapper Component Behavior:**
+    - Only renders children **after** the Google Maps API is loaded
+    - Uses callback/render props to handle loading states
+    - Simpler loading model
+  </Tab>
+  
+  <Tab title="React Google Maps">
+    **APIProvider Component Behavior:**
+    - **Always** renders children immediately
+    - Uses hooks like `useApiLoadingStatus()` to handle API loading
+    - More flexible component architecture
+    - Better integration with React patterns
+  </Tab>
+</Tabs>
+
+<Info>
+The `<APIProvider>` has the same core function as `<Wrapper>`, but with a different rendering model that's more aligned with React best practices.
+</Info>
+
+## Drop-in Replacement
+
+You can create a fully compatible `<Wrapper>` component using React Google Maps, allowing you to use it as a drop-in replacement.
+
+### Implementation
+
+<Steps>
+
+<Step title="Create the Wrapper component">
+Create a `wrapper.tsx` file with the following code:
+
+```tsx filename="wrapper.tsx"
+import React, {
+  FunctionComponent,
+  PropsWithChildren,
+  ReactNode,
+  useEffect
+} from 'react';
+
+import {
+  APILoadingStatus,
+  APIProvider,
+  APIProviderProps,
+  useApiLoadingStatus
+} from '@vis.gl/react-google-maps';
+
+const STATUS_MAP = {
+  [APILoadingStatus.LOADING]: 'LOADING',
+  [APILoadingStatus.LOADED]: 'SUCCESS',
+  [APILoadingStatus.FAILED]: 'FAILURE'
+} as const;
+
+type WrapperProps = PropsWithChildren<
+  {
+    apiKey: string;
+    callback?: (status: string) => void;
+    render?: (status: string) => ReactNode;
+  } & APIProviderProps
+>;
+
+export const Wrapper: FunctionComponent<WrapperProps> = ({
+  apiKey,
+  children,
+  render,
+  callback,
+  ...apiProps
+}) => {
+  return (
+    <APIProvider apiKey={apiKey} {...apiProps}>
+      <InnerWrapper callback={callback} render={render}>
+        {children}
+      </InnerWrapper>
+    </APIProvider>
+  );
+};
+
+const InnerWrapper = ({
+  callback,
+  render,
+  children
+}: PropsWithChildren<Omit<WrapperProps, 'apiKey'>>) => {
+  const status = useApiLoadingStatus();
+  const mappedStatus = STATUS_MAP[status] ?? 'LOADING';
+
+  useEffect(() => {
+    if (callback) callback(mappedStatus);
+  }, [callback, mappedStatus]);
+
+  if (status === APILoadingStatus.LOADED) return children;
+  if (render) return render(mappedStatus);
+
+  return <></>;
+};
+```
+
+<Note>
+This implementation maps the APILoadingStatus enum to the status strings used by `@googlemaps/react-wrapper`.
+</Note>
+</Step>
+
+<Step title="Replace imports">
+Update your imports from:
+
+```tsx
+import {Wrapper} from '@googlemaps/react-wrapper';
+```
+
+To:
+
+```tsx
+import {Wrapper} from './wrapper';
+```
+</Step>
+
+<Step title="Use as before">
+Your existing code continues to work without changes:
+
+```tsx
+import React from 'react';
+import {Wrapper} from './wrapper';
+import {createRoot} from 'react-dom/client';
+
+const MyMapComponent = () => {
+  // Your existing map code
+  return <div ref={mapRef} style={{height: '400px'}} />;
+};
+
+const App = () => (
+  <Wrapper
+    apiKey={"YOUR_API_KEY"}
+    render={(status) => <div>Loading: {status}</div>}>
+    <MyMapComponent />
+  </Wrapper>
+);
+
+const root = createRoot(document.getElementById('root')!);
+root.render(<App />);
+```
+</Step>
+
+</Steps>
+
+## Migration Strategies
+
+Choose the migration approach that best fits your needs:
+
+### Strategy 1: Gradual Migration (Recommended)
+
+<Steps>
+
+<Step title="Add the Wrapper polyfill">
+Implement the `Wrapper` component as shown above to maintain compatibility.
+</Step>
+
+<Step title="Update new components">
+For new components, use `APIProvider` and hooks directly:
+
+```tsx
+import {APIProvider, Map, useMap} from '@vis.gl/react-google-maps';
+
+function NewComponent() {
+  return (
+    <APIProvider apiKey={API_KEY}>
+      <Map defaultCenter={{lat: 0, lng: 0}} defaultZoom={4} />
+    </APIProvider>
+  );
+}
+```
+</Step>
+
+<Step title="Refactor incrementally">
+Gradually refactor existing components to use the new hooks and components.
+</Step>
+
+</Steps>
+
+### Strategy 2: Complete Migration
+
+For a full migration, replace `Wrapper` usage with `APIProvider`:
+
+<Tabs>
+  <Tab title="Before">
+    ```tsx
+    import {Wrapper} from '@googlemaps/react-wrapper';
+
+    function App() {
+      return (
+        <Wrapper
+          apiKey={API_KEY}
+          render={(status) => <Loading status={status} />}>
+          <MapComponent />
+        </Wrapper>
+      );
+    }
+    ```
+  </Tab>
+  
+  <Tab title="After">
+    ```tsx
+    import {
+      APIProvider,
+      useApiLoadingStatus,
+      APILoadingStatus
+    } from '@vis.gl/react-google-maps';
+
+    function LoadingHandler({children}) {
+      const status = useApiLoadingStatus();
+      
+      if (status === APILoadingStatus.LOADING) {
+        return <Loading status="LOADING" />;
+      }
+      if (status === APILoadingStatus.FAILED) {
+        return <Loading status="FAILURE" />;
+      }
+      
+      return children;
+    }
+
+    function App() {
+      return (
+        <APIProvider apiKey={API_KEY}>
+          <LoadingHandler>
+            <MapComponent />
+          </LoadingHandler>
+        </APIProvider>
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Using React Google Maps Features
+
+Once migrated, you can leverage the full feature set:
+
+### Declarative Components
+
+```tsx
+import {APIProvider, Map, Marker, InfoWindow} from '@vis.gl/react-google-maps';
+
+function App() {
+  return (
+    <APIProvider apiKey={API_KEY}>
+      <Map
+        defaultCenter={{lat: 37.7749, lng: -122.4194}}
+        defaultZoom={12}
+        mapId={'YOUR_MAP_ID'}>
+        <Marker position={{lat: 37.7749, lng: -122.4194}} />
+      </Map>
+    </APIProvider>
+  );
+}
+```
+
+### Hooks for Advanced Control
+
+```tsx
+import {useMap, useMapsLibrary} from '@vis.gl/react-google-maps';
+
+function CustomControl() {
+  const map = useMap();
+  const placesLib = useMapsLibrary('places');
+  
+  useEffect(() => {
+    if (!map || !placesLib) return;
+    
+    // Use map instance and places library
+    const service = new placesLib.PlacesService(map);
+    // ... your code
+  }, [map, placesLib]);
+  
+  return null;
+}
+```
+
+## Status Mapping Reference
+
+The wrapper implementation maps statuses as follows:
+
+| APILoadingStatus | @googlemaps/react-wrapper |
+|------------------|---------------------------|
+| `LOADING`        | `"LOADING"`               |
+| `LOADED`         | `"SUCCESS"`               |
+| `FAILED`         | `"FAILURE"`               |
+
+## Benefits of Migration
+
+Migrating to React Google Maps provides several advantages:
+
+<Info>
+**Enhanced Features:**
+- Declarative marker, polygon, and polyline components
+- Built-in hooks for common use cases
+- TypeScript support with full type definitions
+- Better React 18+ compatibility
+- Active development and community support
+</Info>
+
+<Note>
+**Developer Experience:**
+- More intuitive API aligned with React patterns
+- Extensive examples and documentation
+- Better integration with modern React features
+- Improved performance optimizations
+</Note>
+
+## Troubleshooting
+
+### Children not rendering
+
+**Problem:** Components inside `<Wrapper>` don't render.
+
+**Solution:** Ensure the `InnerWrapper` component properly checks the loading status:
+
+```tsx
+if (status === APILoadingStatus.LOADED) return children;
+```
+
+### Callback not firing
+
+**Problem:** The callback prop isn't being called.
+
+**Solution:** Verify the useEffect dependency array includes the callback:
+
+```tsx
+useEffect(() => {
+  if (callback) callback(mappedStatus);
+}, [callback, mappedStatus]);
+```
+
+### Type errors
+
+**Problem:** TypeScript errors with the Wrapper component.
+
+**Solution:** Ensure you import the correct types:
+
+```tsx
+import type {APIProviderProps} from '@vis.gl/react-google-maps';
+```
+
+## Additional Resources
+
+- [Complete Migration Example](https://github.com/visgl/react-google-maps/tree/main/examples/react-wrapper-migration)
+- [APIProvider Documentation](../api-reference/components/api-provider)
+- [useApiLoadingStatus Hook](../api-reference/hooks/use-api-loading-status)
+- [@googlemaps/react-wrapper Repository](https://github.com/googlemaps/react-wrapper)

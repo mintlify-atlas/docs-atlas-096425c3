@@ -1,97 +1,117 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "React Google Maps"
+description: "React components and hooks for the Google Maps JavaScript API"
 ---
 
-## Setting up
-
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
+<CardGroup cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Quick Start"
+    icon="rocket"
+    href="/quickstart"
   >
-    Edit your docs locally and preview them in real time.
+    Get up and running with React Google Maps in minutes
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Installation"
+    icon="download"
+    href="/installation"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    Install the package and configure your API key
   </Card>
   <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
+    title="Components"
+    icon="shapes"
+    href="/api-reference/components/map"
   >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+    Explore all available React components
   </Card>
   <Card
-    title="Code samples"
+    title="Hooks"
+    icon="brackets-curly"
+    href="/api-reference/hooks/use-map"
+  >
+    Use hooks to access Maps JavaScript API libraries
+  </Card>
+</CardGroup>
+
+## Overview
+
+This library provides a collection of React components and hooks to integrate the Google Maps JavaScript API into your React application. Built with TypeScript, it offers full type safety and supports modern React patterns including hooks and server-side rendering.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card
+    title="React Components"
+    icon="react"
+  >
+    Pre-built components for maps, markers, info windows, and controls
+  </Card>
+  <Card
+    title="TypeScript Support"
     icon="code"
-    href="/essentials/code"
   >
-    Add sample code to demonstrate how to use your product.
+    Full type definitions for all components and hooks
   </Card>
   <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
+    title="3D Maps"
+    icon="cube"
   >
-    Display images and other media.
+    Support for 3D maps and markers with the Map3D component
   </Card>
   <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
+    title="SSR Compatible"
+    icon="server"
   >
-    Write once and reuse across your docs.
+    Works with Next.js and other server-side rendering frameworks
   </Card>
-</Columns>
+  <Card
+    title="deck.gl Integration"
+    icon="layer-group"
+  >
+    Advanced visualizations with deck.gl overlay support
+  </Card>
+  <Card
+    title="Custom Overlays"
+    icon="paint-brush"
+  >
+    Create custom overlays using OverlayView and WebGlOverlayView
+  </Card>
+</CardGroup>
 
-## Need inspiration?
+## Quick Example
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+```tsx
+import {APIProvider, Map, AdvancedMarker} from '@vis.gl/react-google-maps';
+
+function App() {
+  const position = {lat: 53.54992, lng: 10.00678};
+
+  return (
+    <APIProvider apiKey={'YOUR_API_KEY'}>
+      <Map defaultCenter={position} defaultZoom={10} mapId="DEMO_MAP_ID">
+        <AdvancedMarker position={position} />
+      </Map>
+    </APIProvider>
+  );
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Guides"
+    icon="book-open"
+    href="/guides/interacting-with-google-maps-api"
+  >
+    Learn how to work with the Google Maps JavaScript API
+  </Card>
+  <Card
+    title="Examples"
+    icon="code-branch"
+    href="/examples/overview"
+  >
+    Explore real-world examples and use cases
+  </Card>
+</CardGroup>

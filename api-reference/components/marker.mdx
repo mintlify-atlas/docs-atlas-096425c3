@@ -1,0 +1,200 @@
+---
+title: Marker
+description: Component to display traditional marker icons on the map
+---
+
+# Marker
+
+The `Marker` component displays a traditional marker icon on the map. This is the legacy marker implementation that works on all map types.
+
+<Note>
+  For maps using cloud-based styling (with a `mapId`), consider using [`AdvancedMarker`](/api-reference/components/advanced-marker) instead for better customization options.
+</Note>
+
+## Usage
+
+```tsx
+import {Map, Marker} from '@vis.gl/react-google-maps';
+
+const MapWithMarker = () => (
+  <Map defaultCenter={{lat: 37.7749, lng: -122.4194}} defaultZoom={12}>
+    <Marker 
+      position={{lat: 37.7749, lng: -122.4194}}
+      title="San Francisco"
+    />
+  </Map>
+);
+```
+
+## Props
+
+<ParamField path="position" type="google.maps.LatLngLiteral">
+  The position of the marker on the map.
+  
+  Example: `{lat: 37.7749, lng: -122.4194}`
+</ParamField>
+
+<ParamField path="title" type="string">
+  Rollover text displayed when hovering over the marker.
+</ParamField>
+
+<ParamField path="label" type="string | google.maps.MarkerLabel">
+  Text or label configuration displayed on the marker.
+  
+  Can be a single character string or a label object with properties like `text`, `color`, `fontSize`, etc.
+</ParamField>
+
+<ParamField path="icon" type="string | google.maps.Icon | google.maps.Symbol">
+  Custom icon for the marker. Can be:
+  - URL string to an image
+  - Icon object with properties like `url`, `scaledSize`, `anchor`
+  - Symbol object for vector-based icons
+</ParamField>
+
+<ParamField path="draggable" type="boolean">
+  Whether the marker can be dragged by the user.
+  
+  Default: `false` (automatically `true` if drag event handlers are provided)
+</ParamField>
+
+<ParamField path="clickable" type="boolean">
+  Whether the marker is clickable.
+  
+  Default: `true`
+</ParamField>
+
+<ParamField path="opacity" type="number">
+  Opacity of the marker (0.0 to 1.0).
+  
+  Default: `1.0`
+</ParamField>
+
+<ParamField path="zIndex" type="number">
+  Z-index of the marker. Higher values are in front.
+</ParamField>
+
+<ParamField path="animation" type="google.maps.Animation">
+  Animation for the marker:
+  - `google.maps.Animation.BOUNCE`
+  - `google.maps.Animation.DROP`
+</ParamField>
+
+### Events
+
+<ParamField path="onClick" type="(e: google.maps.MapMouseEvent) => void">
+  Fired when the marker is clicked.
+</ParamField>
+
+<ParamField path="onDrag" type="(e: google.maps.MapMouseEvent) => void">
+  Fired repeatedly while dragging the marker.
+</ParamField>
+
+<ParamField path="onDragStart" type="(e: google.maps.MapMouseEvent) => void">
+  Fired when dragging starts.
+</ParamField>
+
+<ParamField path="onDragEnd" type="(e: google.maps.MapMouseEvent) => void">
+  Fired when dragging ends.
+</ParamField>
+
+<ParamField path="onMouseOver" type="(e: google.maps.MapMouseEvent) => void">
+  Fired when the mouse enters the marker.
+</ParamField>
+
+<ParamField path="onMouseOut" type="(e: google.maps.MapMouseEvent) => void">
+  Fired when the mouse leaves the marker.
+</ParamField>
+
+## Examples
+
+### Custom Icon
+
+```tsx
+<Marker 
+  position={{lat: 37.7749, lng: -122.4194}}
+  icon={{
+    url: '/custom-icon.png',
+    scaledSize: new google.maps.Size(40, 40),
+    anchor: new google.maps.Point(20, 40)
+  }}
+/>
+```
+
+### Draggable Marker
+
+```tsx
+const [markerPos, setMarkerPos] = useState({lat: 37.7749, lng: -122.4194});
+
+<Marker 
+  position={markerPos}
+  draggable
+  onDragEnd={(e) => {
+    if (e.latLng) {
+      setMarkerPos({lat: e.latLng.lat(), lng: e.latLng.lng()});
+    }
+  }}
+/>
+```
+
+### Animated Marker
+
+```tsx
+<Marker 
+  position={{lat: 37.7749, lng: -122.4194}}
+  animation={google.maps.Animation.BOUNCE}
+/>
+```
+
+### Marker with Label
+
+```tsx
+<Marker 
+  position={{lat: 37.7749, lng: -122.4194}}
+  label={{
+    text: 'A',
+    color: 'white',
+    fontSize: '16px',
+    fontWeight: 'bold'
+  }}
+/>
+```
+
+## Using with InfoWindow
+
+Use the `useMarkerRef` hook to connect a marker with an info window:
+
+```tsx
+import {Marker, InfoWindow, useMarkerRef} from '@vis.gl/react-google-maps';
+
+const MarkerWithInfo = () => {
+  const [markerRef, marker] = useMarkerRef();
+  const [infoOpen, setInfoOpen] = useState(false);
+
+  return (
+    <>
+      <Marker 
+        ref={markerRef}
+        position={{lat: 37.7749, lng: -122.4194}}
+        onClick={() => setInfoOpen(true)}
+      />
+      {infoOpen && (
+        <InfoWindow 
+          anchor={marker}
+          onCloseClick={() => setInfoOpen(false)}
+        >
+          <div>Marker info content</div>
+        </InfoWindow>
+      )}
+    </>
+  );
+};
+```
+
+## Related Components
+
+- [`AdvancedMarker`](/api-reference/components/advanced-marker) - Modern marker with better customization
+- [`InfoWindow`](/api-reference/components/info-window) - Display information attached to markers
+
+## Related Hooks
+
+- [`useMap()`](/api-reference/hooks/use-map) - Access the map instance

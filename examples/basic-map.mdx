@@ -1,0 +1,231 @@
+---
+title: Basic Map Example
+description: Learn how to create a simple Google Map with React Google Maps
+---
+
+This example demonstrates the minimal setup required to display a Google Map in your React application.
+
+## Simple Map Implementation
+
+The most basic map requires only three components: `APIProvider`, `Map`, and your API key.
+
+```tsx
+import React from 'react';
+import {APIProvider, Map} from '@vis.gl/react-google-maps';
+
+const App = () => (
+  <APIProvider apiKey={YOUR_API_KEY}>
+    <Map
+      defaultZoom={3}
+      defaultCenter={{lat: 22.54992, lng: 0}}
+      gestureHandling={'greedy'}
+      disableDefaultUI={true}
+    />
+  </APIProvider>
+);
+
+export default App;
+```
+
+## Key Components
+
+### APIProvider
+
+The `APIProvider` component is the root component that loads the Google Maps API and makes it available to all child components.
+
+```tsx
+<APIProvider apiKey={YOUR_API_KEY}>
+  {/* Your map components go here */}
+</APIProvider>
+```
+
+<Note>
+  The API key should be stored securely in environment variables, not hardcoded in your source code.
+</Note>
+
+### Map Component
+
+The `Map` component renders the actual map with the specified configuration.
+
+#### Common Props
+
+- `defaultZoom` - Initial zoom level (0-22)
+- `defaultCenter` - Initial map center as `{lat: number, lng: number}`
+- `gestureHandling` - Controls map interaction behavior:
+  - `'greedy'` - Map always pans/zooms on touch/scroll
+  - `'cooperative'` - Requires modifier key for zooming
+  - `'auto'` - Adjusts based on context
+- `disableDefaultUI` - Hides default map controls
+
+## Complete Example with Controls
+
+Here's a more complete example that includes a control panel:
+
+```tsx
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {APIProvider, Map} from '@vis.gl/react-google-maps';
+import ControlPanel from './control-panel';
+
+const API_KEY = process.env.GOOGLE_MAPS_API_KEY as string;
+
+const App = () => (
+  <APIProvider apiKey={API_KEY}>
+    <Map
+      defaultZoom={3}
+      defaultCenter={{lat: 22.54992, lng: 0}}
+      gestureHandling={'greedy'}
+      disableDefaultUI={true}
+    />
+    <ControlPanel />
+  </APIProvider>;
+);
+
+export default App;
+
+export function renderToDom(container: HTMLElement) {
+  const root = createRoot(container);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}
+```
+
+## Map Styling Options
+
+### Setting Map Dimensions
+
+By default, the `Map` component fills its container. You can control the size through CSS:
+
+```tsx
+<div style={{width: '100vw', height: '100vh'}}>
+  <APIProvider apiKey={API_KEY}>
+    <Map
+      defaultZoom={10}
+      defaultCenter={{lat: 40.7128, lng: -74.0060}}
+    />
+  </APIProvider>
+</div>
+```
+
+### Custom Map ID
+
+For advanced styling and features, use a custom Map ID from the Google Cloud Console:
+
+```tsx
+<Map
+  mapId={'your-custom-map-id'}
+  defaultZoom={10}
+  defaultCenter={{lat: 40.7128, lng: -74.0060}}
+/>
+```
+
+<Tip>
+  A Map ID is required for using Advanced Markers and other modern features.
+</Tip>
+
+## Gesture Handling
+
+Control how users interact with the map:
+
+<CodeGroup>
+```tsx Greedy (Always Interactive)
+<Map
+  gestureHandling={'greedy'}
+  defaultZoom={10}
+  defaultCenter={{lat: 40.7128, lng: -74.0060}}
+/>
+```
+
+```tsx Cooperative (Requires Modifier)
+<Map
+  gestureHandling={'cooperative'}
+  defaultZoom={10}
+  defaultCenter={{lat: 40.7128, lng: -74.0060}}
+/>
+```
+
+```tsx None (No Interaction)
+<Map
+  gestureHandling={'none'}
+  defaultZoom={10}
+  defaultCenter={{lat: 40.7128, lng: -74.0060}}
+/>
+```
+</CodeGroup>
+
+## Map Controls
+
+Toggle the default UI controls:
+
+```tsx
+// Hide all default controls
+<Map
+  disableDefaultUI={true}
+  defaultZoom={10}
+  defaultCenter={{lat: 40.7128, lng: -74.0060}}
+/>
+
+// Or control individual UI elements
+<Map
+  zoomControl={true}
+  mapTypeControl={false}
+  streetViewControl={false}
+  fullscreenControl={true}
+  defaultZoom={10}
+  defaultCenter={{lat: 40.7128, lng: -74.0060}}
+/>
+```
+
+## Controlled vs Uncontrolled
+
+The map can be used in controlled or uncontrolled mode:
+
+### Uncontrolled (Recommended for Simple Cases)
+
+```tsx
+<Map
+  defaultZoom={10}
+  defaultCenter={{lat: 40.7128, lng: -74.0060}}
+/>
+```
+
+### Controlled
+
+```tsx
+const [zoom, setZoom] = useState(10);
+const [center, setCenter] = useState({lat: 40.7128, lng: -74.0060});
+
+<Map
+  zoom={zoom}
+  center={center}
+  onZoomChanged={(e) => setZoom(e.detail.zoom)}
+  onCenterChanged={(e) => setCenter(e.detail.center)}
+/>
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Add Markers" icon="location-dot" href="/examples/markers">
+    Learn how to add markers and pins to your map
+  </Card>
+  
+  <Card title="Map Component" icon="bolt" href="/api-reference/components/map">
+    Explore the Map component API
+  </Card>
+  
+  <Card title="Interacting with API" icon="palette" href="/guides/interacting-with-google-maps-api">
+    Use Google Maps JavaScript API features
+  </Card>
+  
+  <Card title="Advanced Features" icon="wand-magic-sparkles" href="/examples/advanced-features">
+    Explore advanced map capabilities
+  </Card>
+</CardGroup>
+
+## Live Example
+
+View this example live at: [https://visgl.github.io/react-google-maps/examples/basic-map](https://visgl.github.io/react-google-maps/examples/basic-map)

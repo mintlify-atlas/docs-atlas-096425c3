@@ -1,0 +1,216 @@
+---
+title: Installation
+description: Install React Google Maps and configure your Google Maps API key
+---
+
+Get started with React Google Maps by installing the library and setting up your Google Maps Platform API key.
+
+## Install the Library
+
+Install `@vis.gl/react-google-maps` using your preferred package manager:
+
+<CodeGroup>
+
+```bash npm
+npm install @vis.gl/react-google-maps
+```
+
+```bash yarn
+yarn add @vis.gl/react-google-maps
+```
+
+```bash pnpm
+pnpm add @vis.gl/react-google-maps
+```
+
+</CodeGroup>
+
+<Note>
+  PowerShell users: Since `@` has a special meaning in PowerShell, you'll need to quote the package name: `npm install "@vis.gl/react-google-maps"`
+</Note>
+
+## TypeScript Support
+
+The library comes with **full TypeScript support out of the box**. No additional type definitions or `@types` packages are required.
+
+## Peer Dependencies
+
+React Google Maps requires React and ReactDOM as peer dependencies:
+
+- **React**: `>=16.8.0` (includes React 17, 18, 19)
+- **ReactDOM**: `>=16.8.0` (includes React 17, 18, 19)
+
+If you don't have React installed in your project:
+
+<CodeGroup>
+
+```bash npm
+npm install react react-dom
+```
+
+```bash yarn
+yarn add react react-dom
+```
+
+```bash pnpm
+pnpm add react react-dom
+```
+
+</CodeGroup>
+
+<Note>
+  React 16.8+ is required because this library uses React Hooks extensively.
+</Note>
+
+## Get a Google Maps API Key
+
+To use the Google Maps JavaScript API, you need an API key. Follow these steps to create one:
+
+<Steps>
+  <Step title="Go to Google Cloud Console">
+    Visit the [Google Cloud Console](https://console.cloud.google.com/) and sign in with your Google account.
+  </Step>
+  
+  <Step title="Create or Select a Project">
+    Create a new project or select an existing one from the project dropdown.
+  </Step>
+  
+  <Step title="Enable the Maps JavaScript API">
+    Navigate to **APIs & Services > Library** and search for "Maps JavaScript API". Click on it and press **Enable**.
+  </Step>
+  
+  <Step title="Create Credentials">
+    Go to **APIs & Services > Credentials** and click **Create Credentials > API Key**. Your new API key will be displayed.
+  </Step>
+  
+  <Step title="Secure Your API Key (Recommended)">
+    Click on your newly created API key to configure restrictions:
+    - **Application restrictions**: Limit usage to specific websites, IP addresses, or apps
+    - **API restrictions**: Restrict the key to only the APIs you need
+  </Step>
+</Steps>
+
+<Warning>
+  Never commit your API key directly to source control. Use environment variables or secure configuration management.
+</Warning>
+
+## Configure Your API Key
+
+There are several ways to manage your API key in your application:
+
+### Using Environment Variables
+
+Create a `.env` file in your project root:
+
+```text .env
+GOOGLE_MAPS_API_KEY=your_api_key_here
+```
+
+Then access it in your code:
+
+```tsx
+import {APIProvider} from '@vis.gl/react-google-maps';
+
+function App() {
+  return (
+    <APIProvider apiKey={process.env.GOOGLE_MAPS_API_KEY}>
+      {/* Your app components */}
+    </APIProvider>
+  );
+}
+```
+
+<Note>
+  Different build tools handle environment variables differently:
+  - **Vite**: Use `import.meta.env.VITE_GOOGLE_MAPS_API_KEY` and prefix with `VITE_`
+  - **Create React App**: Use `process.env.REACT_APP_GOOGLE_MAPS_API_KEY` and prefix with `REACT_APP_`
+  - **Next.js**: Use `process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` and prefix with `NEXT_PUBLIC_`
+</Note>
+
+### Using a Configuration File
+
+Create a separate configuration file (excluded from version control):
+
+```ts config.ts
+export const config = {
+  googleMapsApiKey: 'your_api_key_here'
+};
+```
+
+Add `config.ts` to your `.gitignore`:
+
+```text .gitignore
+config.ts
+.env
+.env.local
+```
+
+## Additional Requirements
+
+### Map IDs (for Advanced Markers)
+
+If you plan to use `AdvancedMarker` components, you'll need a **Map ID**:
+
+1. Go to the [Google Cloud Console > Map Management](https://console.cloud.google.com/google/maps-apis/studio/maps)
+2. Click **Create Map ID**
+3. Configure your map style and settings
+4. Copy the Map ID for use in your application
+
+```tsx
+<Map 
+  mapId="YOUR_MAP_ID" 
+  defaultCenter={{lat: 53.55, lng: 10.01}} 
+  defaultZoom={10}
+>
+  <AdvancedMarker position={{lat: 53.55, lng: 10.01}} />
+</Map>
+```
+
+<Warning>
+  `AdvancedMarker` components require a `mapId` prop on the `Map` component. Without it, the markers will not render.
+</Warning>
+
+## Browser Support
+
+This library follows the Google Maps JavaScript API browser support policy. The **last two versions** of the following browsers are officially supported:
+
+- Google Chrome
+- Mozilla Firefox
+- Safari
+- Microsoft Edge
+
+Older browsers may work but are not actively tested or supported.
+
+## Verify Installation
+
+Test your installation with this minimal example:
+
+```tsx
+import React from 'react';
+import {APIProvider, Map} from '@vis.gl/react-google-maps';
+
+function App() {
+  return (
+    <div style={{height: '100vh', width: '100%'}}>
+      <APIProvider apiKey={process.env.GOOGLE_MAPS_API_KEY}>
+        <Map
+          defaultCenter={{lat: 22.54992, lng: 0}}
+          defaultZoom={3}
+          gestureHandling='greedy'
+          disableDefaultUI
+        />
+      </APIProvider>
+    </div>
+  );
+}
+
+export default App;
+```
+
+If you see a map rendered, you're ready to go!
+
+## Next Steps
+
+<Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+  Learn how to build your first interactive map with markers and info windows
+</Card>

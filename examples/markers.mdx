@@ -1,0 +1,374 @@
+---
+title: Markers & InfoWindows
+description: Learn how to add markers, pins, and information windows to your map
+---
+
+This example demonstrates various ways to display markers and information windows on your Google Map.
+
+## Marker Types
+
+React Google Maps supports multiple marker types:
+
+- **Marker** - Traditional Google Maps marker (legacy)
+- **AdvancedMarker** - Modern marker with better performance and customization
+- **Pin** - Customizable pin component for use with AdvancedMarker
+- **Custom HTML Markers** - Fully custom marker content
+
+## Basic Marker Usage
+
+### Legacy Marker
+
+The traditional Google Maps marker:
+
+```tsx
+import {Marker} from '@vis.gl/react-google-maps';
+
+<Marker
+  position={{lat: 10, lng: 10}}
+  clickable={true}
+  onClick={() => alert('marker was clicked!')}
+  title={'clickable google.maps.Marker'}
+/>
+```
+
+### AdvancedMarker
+
+The modern, performant marker (requires a Map ID):
+
+```tsx
+import {AdvancedMarker} from '@vis.gl/react-google-maps';
+
+<AdvancedMarker
+  position={{lat: 20, lng: 10}}
+  title={'AdvancedMarker with default pin'}
+/>
+```
+
+<Note>
+  AdvancedMarkers require a `mapId` to be specified on the Map component and the `'marker'` library to be loaded.
+</Note>
+
+## Customizing Pins
+
+The `Pin` component allows you to customize the appearance of markers:
+
+### Custom Colors
+
+```tsx
+import {AdvancedMarker, Pin} from '@vis.gl/react-google-maps';
+
+<AdvancedMarker
+  position={{lat: 20, lng: 10}}
+  title={'AdvancedMarker with customized pin'}>
+  <Pin
+    background={'#22ccff'}
+    borderColor={'#1e89a1'}
+    glyphColor={'#0f677a'}
+  />
+</AdvancedMarker>
+```
+
+### Custom Glyph Content
+
+You can add custom content inside the pin:
+
+```tsx
+<AdvancedMarker
+  position={{lat: 15, lng: 20}}
+  title={'AdvancedMarker with emoji glyph'}>
+  <Pin 
+    background={'#22ccff'} 
+    borderColor={'#1e89a1'} 
+    scale={1.4}>
+    👀
+  </Pin>
+</AdvancedMarker>
+```
+
+### Pin Sizing
+
+Control the pin size with the `scale` prop:
+
+```tsx
+<Pin
+  background={'#FBBC04'}
+  borderColor={'#F29900'}
+  glyphColor={'#8B5E00'}
+  scale={1.5}
+/>
+```
+
+## Custom HTML Markers
+
+Create fully custom markers with any HTML content:
+
+```tsx
+<AdvancedMarker
+  position={{lat: 30, lng: 10}}
+  title={'AdvancedMarker with custom html content'}>
+  <div
+    style={{
+      width: 16,
+      height: 16,
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      background: '#1dbe80',
+      border: '2px solid #0e6443',
+      borderRadius: '50%',
+      transform: 'translate(-50%, -50%)'
+    }}
+  />
+</AdvancedMarker>
+```
+
+## InfoWindows
+
+Display information windows on the map:
+
+### Positioned InfoWindow
+
+```tsx
+import {InfoWindow} from '@vis.gl/react-google-maps';
+
+<InfoWindow position={{lat: 40, lng: 0}} maxWidth={200}>
+  <p>
+    This is the content for an infowindow with <em>HTML</em> elements.
+  </p>
+</InfoWindow>
+```
+
+### InfoWindow with Marker
+
+Create an interactive marker that shows an InfoWindow on click:
+
+```tsx
+import {useState} from 'react';
+import {AdvancedMarker, InfoWindow, Pin} from '@vis.gl/react-google-maps';
+
+function MarkerWithInfowindow() {
+  const [infowindowOpen, setInfowindowOpen] = useState(false);
+  const position = {lat: 35, lng: -10};
+
+  return (
+    <>
+      <AdvancedMarker
+        position={position}
+        onClick={() => setInfowindowOpen(true)}>
+        <Pin
+          background={'#FBBC04'}
+          borderColor={'#F29900'}
+          glyphColor={'#8B5E00'}
+        />
+      </AdvancedMarker>
+
+      {infowindowOpen && (
+        <InfoWindow
+          position={position}
+          onCloseClick={() => setInfowindowOpen(false)}>
+          <div>
+            <h3>Marker Location</h3>
+            <p>This marker shows additional information when clicked.</p>
+          </div>
+        </InfoWindow>
+      )}
+    </>
+  );
+}
+```
+
+## Complete Example
+
+Here's a comprehensive example showing multiple marker types:
+
+```tsx
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {
+  AdvancedMarker,
+  APIProvider,
+  InfoWindow,
+  Map,
+  Marker,
+  Pin
+} from '@vis.gl/react-google-maps';
+
+const API_KEY = process.env.GOOGLE_MAPS_API_KEY as string;
+
+const App = () => {
+  return (
+    <APIProvider apiKey={API_KEY} libraries={['marker']}>
+      <Map
+        mapId={'bf51a910020fa25a'}
+        defaultZoom={3}
+        defaultCenter={{lat: 12, lng: 0}}
+        gestureHandling={'greedy'}
+        disableDefaultUI>
+        
+        {/* Simple marker */}
+        <Marker
+          position={{lat: 10, lng: 10}}
+          clickable={true}
+          onClick={() => alert('marker was clicked!')}
+          title={'clickable google.maps.Marker'}
+        />
+
+        {/* Advanced marker with customized pin */}
+        <AdvancedMarker
+          position={{lat: 20, lng: 10}}
+          title={'AdvancedMarker with customized pin.'}>
+          <Pin
+            background={'#22ccff'}
+            borderColor={'#1e89a1'}
+            glyphColor={'#0f677a'}
+          />
+        </AdvancedMarker>
+
+        {/* Advanced marker with html pin glyph */}
+        <AdvancedMarker
+          position={{lat: 15, lng: 20}}
+          title={'AdvancedMarker with emoji glyph.'}>
+          <Pin background={'#22ccff'} borderColor={'#1e89a1'} scale={1.4}>
+            👀
+          </Pin>
+        </AdvancedMarker>
+
+        {/* Advanced marker with html-content */}
+        <AdvancedMarker
+          position={{lat: 30, lng: 10}}
+          title={'AdvancedMarker with custom html content.'}>
+          <div
+            style={{
+              width: 16,
+              height: 16,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              background: '#1dbe80',
+              border: '2px solid #0e6443',
+              borderRadius: '50%',
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+        </AdvancedMarker>
+
+        {/* Simple positioned infowindow */}
+        <InfoWindow position={{lat: 40, lng: 0}} maxWidth={200}>
+          <p>
+            This is the content for an infowindow with <em>HTML</em> elements.
+          </p>
+        </InfoWindow>
+      </Map>
+    </APIProvider>
+  );
+};
+
+export default App;
+```
+
+## Marker Events
+
+Markers support various event handlers:
+
+```tsx
+<AdvancedMarker
+  position={{lat: 25, lng: 15}}
+  onClick={(e) => console.log('clicked', e)}
+  onMouseEnter={(e) => console.log('mouse enter', e)}
+  onMouseLeave={(e) => console.log('mouse leave', e)}
+  onDrag={(e) => console.log('dragging', e)}
+  onDragStart={(e) => console.log('drag start', e)}
+  onDragEnd={(e) => console.log('drag end', e)}
+/>
+```
+
+## Draggable Markers
+
+Make markers draggable by users:
+
+```tsx
+import {useState} from 'react';
+
+function MovingMarker() {
+  const [markerPosition, setMarkerPosition] = useState({
+    lat: 25,
+    lng: 15
+  });
+
+  return (
+    <AdvancedMarker
+      position={markerPosition}
+      draggable={true}
+      onDragEnd={(e) => {
+        if (e.latLng) {
+          setMarkerPosition({
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng()
+          });
+        }
+      }}
+    />
+  );
+}
+```
+
+## Real Estate Example
+
+A complex example showing custom markers for a real estate listing:
+
+```tsx
+import {AdvancedMarker} from '@vis.gl/react-google-maps';
+
+function CustomAdvancedMarker({realEstateListing}) {
+  return (
+    <AdvancedMarker position={realEstateListing.position}>
+      <div className="property-marker">
+        <img 
+          src={realEstateListing.imageUrl} 
+          alt={realEstateListing.title}
+          style={{width: 50, height: 50, borderRadius: 8}}
+        />
+        <div className="property-price">
+          ${realEstateListing.price.toLocaleString()}
+        </div>
+      </div>
+    </AdvancedMarker>
+  );
+}
+```
+
+## Best Practices
+
+<Warning>
+  When displaying many markers (100+), consider using marker clustering for better performance.
+</Warning>
+
+<Tip>
+  Use AdvancedMarker instead of legacy Marker for better performance and more customization options.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Marker Clustering" icon="object-group" href="/examples/advanced-features#clustering">
+    Learn how to cluster markers for better performance
+  </Card>
+  
+  <Card title="Custom Markers" icon="pen-fancy" href="/examples/advanced-features#custom-markers">
+    Create fully custom marker designs
+  </Card>
+  
+  <Card title="AdvancedMarker API" icon="book" href="/api-reference/components/advanced-marker">
+    Full API reference for AdvancedMarker
+  </Card>
+  
+  <Card title="InfoWindow API" icon="window" href="/api-reference/components/info-window">
+    Full API reference for InfoWindow
+  </Card>
+</CardGroup>
+
+## Live Examples
+
+- [Markers and InfoWindows](https://visgl.github.io/react-google-maps/examples/markers-and-infowindows)
+- [Advanced Marker](https://visgl.github.io/react-google-maps/examples/advanced-marker)
+- [Advanced Marker Interaction](https://visgl.github.io/react-google-maps/examples/advanced-marker-interaction)

@@ -1,0 +1,278 @@
+---
+title: 'useApiLoadingStatus'
+description: 'Monitor the loading status of the Google Maps JavaScript API'
+---
+
+The `useApiLoadingStatus()` hook returns the current status of the API Loader, allowing you to react to different loading states including errors and authentication failures.
+
+## Returns
+
+<ResponseField name="status" type="APILoadingStatus">
+  The current loading state of the Maps JavaScript API. Possible values:
+  
+  - `NOT_LOADED` - The API has not started loading
+  - `LOADING` - The API is currently loading
+  - `LOADED` - The API has successfully loaded
+  - `FAILED` - The API failed to load
+  - `AUTH_FAILURE` - Authentication failed (invalid API key)
+</ResponseField>
+
+## Usage
+
+### Basic Usage
+
+```tsx
+import { useApiLoadingStatus, APILoadingStatus } from '@vis.gl/react-google-maps';
+import { useEffect } from 'react';
+
+const MyComponent = () => {
+  const status = useApiLoadingStatus();
+
+  useEffect(() => {
+    if (status === APILoadingStatus.FAILED) {
+      console.error('Failed to load Google Maps API');
+    }
+
+    if (status === APILoadingStatus.AUTH_FAILURE) {
+      console.error('Invalid API key');
+    }
+
+    if (status === APILoadingStatus.LOADED) {
+      console.log('Google Maps API loaded successfully');
+    }
+  }, [status]);
+
+  return <div>Status: {status}</div>;
+};
+
+const App = () => (
+  <APIProvider apiKey="YOUR_API_KEY">
+    <MyComponent />
+  </APIProvider>
+);
+```
+
+### Status-Based Rendering
+
+```tsx
+const LoadingStatusDisplay = () => {
+  const status = useApiLoadingStatus();
+
+  switch (status) {
+    case APILoadingStatus.NOT_LOADED:
+      return <div>Initializing...</div>;
+    
+    case APILoadingStatus.LOADING:
+      return (
+        <div>
+          <Spinner />
+          <p>Loading Google Maps...</p>
+        </div>
+      );
+    
+    case APILoadingStatus.LOADED:
+      return <Map defaultCenter={{lat: 37.7749, lng: -122.4194}} defaultZoom={10} />;
+    
+    case APILoadingStatus.FAILED:
+      return (
+        <div className="error">
+          <p>Failed to load Google Maps. Please try again later.</p>
+        </div>
+      );
+    
+    case APILoadingStatus.AUTH_FAILURE:
+      return (
+        <div className="error">
+          <p>Authentication failed. Please check your API key.</p>
+        </div>
+      );
+    
+    default:
+      return null;
+  }
+};
+```
+
+### Error Handling
+
+```tsx
+const ErrorHandler = () => {
+  const status = useApiLoadingStatus();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    switch (status) {
+      case APILoadingStatus.FAILED:
+        setErrorMessage(
+          'Failed to load the Google Maps API. Please check your internet connection and try again.'
+        );
+        break;
+      
+      case APILoadingStatus.AUTH_FAILURE:
+        setErrorMessage(
+          'Invalid API key. Please check your Google Maps API key in the APIProvider configuration.'
+        );
+        break;
+      
+      case APILoadingStatus.LOADED:
+        setErrorMessage(null);
+        break;
+    }
+  }, [status]);
+
+  if (errorMessage) {
+    return (
+      <div className="error-banner">
+        <span>⚠️</span>
+        <p>{errorMessage}</p>
+      </div>
+    );
+  }
+
+  return null;
+};
+```
+
+### Loading Progress Indicator
+
+```tsx
+const LoadingProgress = () => {
+  const status = useApiLoadingStatus();
+
+  const getProgress = () => {
+    switch (status) {
+      case APILoadingStatus.NOT_LOADED:
+        return 0;
+      case APILoadingStatus.LOADING:
+        return 50;
+      case APILoadingStatus.LOADED:
+        return 100;
+      default:
+        return 0;
+    }
+  };
+
+  const progress = getProgress();
+  const isError = [APILoadingStatus.FAILED, APILoadingStatus.AUTH_FAILURE].includes(status);
+
+  return (
+    <div className="progress-container">
+      <div 
+        className={`progress-bar ${isError ? 'error' : ''}`}
+        style={{ width: `${progress}%` }}
+      />
+      <p>
+        {status === APILoadingStatus.LOADING && 'Loading...'}
+        {status === APILoadingStatus.LOADED && 'Ready!'}
+        {isError && 'Error occurred'}
+      </p>
+    </div>
+  );
+};
+```
+
+## Common Patterns
+
+### Retry Logic
+
+```tsx
+const MapWithRetry = () => {
+  const status = useApiLoadingStatus();
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    // Trigger a reload or re-initialization
+    window.location.reload();
+  };
+
+  if (status === APILoadingStatus.FAILED && retryCount < 3) {
+    return (
+      <div>
+        <p>Failed to load map. Attempt {retryCount + 1}/3</p>
+        <button onClick={handleRetry}>Retry</button>
+      </div>
+    );
+  }
+
+  if (status === APILoadingStatus.LOADED) {
+    return <Map defaultCenter={{lat: 37.7749, lng: -122.4194}} defaultZoom={10} />;
+  }
+
+  return <div>Loading...</div>;
+};
+```
+
+### Analytics Integration
+
+```tsx
+const AnalyticsTracker = () => {
+  const status = useApiLoadingStatus();
+
+  useEffect(() => {
+    // Track loading events
+    switch (status) {
+      case APILoadingStatus.LOADING:
+        analytics.track('maps_api_loading_started');
+        break;
+      
+      case APILoadingStatus.LOADED:
+        analytics.track('maps_api_loading_completed');
+        break;
+      
+      case APILoadingStatus.FAILED:
+        analytics.track('maps_api_loading_failed', {
+          error: 'generic_failure'
+        });
+        break;
+      
+      case APILoadingStatus.AUTH_FAILURE:
+        analytics.track('maps_api_loading_failed', {
+          error: 'authentication_failure'
+        });
+        break;
+    }
+  }, [status]);
+
+  return null;
+};
+```
+
+### Conditional Feature Enabling
+
+```tsx
+const FeatureToggle = () => {
+  const status = useApiLoadingStatus();
+  const [featuresEnabled, setFeaturesEnabled] = useState(false);
+
+  useEffect(() => {
+    if (status === APILoadingStatus.LOADED) {
+      setFeaturesEnabled(true);
+    } else if (status === APILoadingStatus.FAILED || status === APILoadingStatus.AUTH_FAILURE) {
+      setFeaturesEnabled(false);
+    }
+  }, [status]);
+
+  return (
+    <div>
+      <button disabled={!featuresEnabled}>
+        Search Places
+      </button>
+      <button disabled={!featuresEnabled}>
+        Get Directions
+      </button>
+    </div>
+  );
+};
+```
+
+<Note>
+  The `useApiLoadingStatus()` hook provides more detailed status information than `useApiIsLoaded()`. Use this hook when you need to handle loading errors or show different UI states during the loading process.
+</Note>
+
+<Warning>
+  If you receive an `AUTH_FAILURE` status, verify that:
+  - Your API key is valid
+  - The Maps JavaScript API is enabled in your Google Cloud Console
+  - Your API key has the correct restrictions configured
+</Warning>

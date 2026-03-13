@@ -1,0 +1,275 @@
+---
+title: 'deck.gl Integration'
+description: 'Learn how to integrate deck.gl with React Google Maps for advanced data visualizations'
+---
+
+Integrate [deck.gl](https://deck.gl) with React Google Maps to create powerful data visualizations on top of Google Maps. There are two main approaches:
+
+1. **Map as a child of DeckGL** - Use deck.gl's camera controls
+2. **GoogleMapsOverlay** - Use Google Maps camera controls with deck.gl layers
+
+## Using Map as a Child of DeckGL
+
+Wrap the `<Map>` component with the [DeckGL React component](https://deck.gl/docs/get-started/using-with-react) to let deck.gl control the camera.
+
+### Required Props
+
+The DeckGL component requires these props:
+
+- `initialViewState` - Starting camera position
+- `layers` - Array of deck.gl layers
+- `controller` - Must be set to `true`
+- `onViewStateChange` - Callback for camera changes
+
+<Warning>
+Always set `controller={true}` and define an initial view state. Use the `limitTiltRange` function for proper Google Maps integration.
+</Warning>
+
+### Basic Example
+
+```tsx
+import React from 'react';
+import {APIProvider, Map, limitTiltRange} from '@vis.gl/react-google-maps';
+import DeckGL from '@deck.gl/react';
+import {GeoJsonLayer} from '@deck.gl/layers';
+
+const INITIAL_VIEW_STATE = {
+  latitude: 37.74,
+  longitude: -122.4,
+  zoom: 11,
+  pitch: 0,
+  bearing: 0
+};
+
+const GOOGLE_MAPS_MAP_OPTIONS = {
+  mapId: '4f6dde3310be51d7',
+  gestureHandling: 'greedy',
+  disableDefaultUI: true
+};
+
+const App = () => {
+  const layers = [
+    // Your deck.gl layers here
+  ];
+
+  return (
+    <APIProvider apiKey={'Your API key here'}>
+      <DeckGL
+        initialViewState={INITIAL_VIEW_STATE}
+        layers={layers}
+        controller={true}
+        onViewStateChange={limitTiltRange}>
+        <Map {...GOOGLE_MAPS_MAP_OPTIONS} />
+      </DeckGL>
+    </APIProvider>
+  );
+};
+
+export default App;
+```
+
+### Complete Example with GeoJSON
+
+Here's a full example that loads GeoJSON data and visualizes it with deck.gl:
+
+```tsx
+import React, {useEffect, useState} from 'react';
+import {APIProvider, Map, limitTiltRange} from '@vis.gl/react-google-maps';
+import DeckGL from '@deck.gl/react';
+import {GeoJsonLayer} from '@deck.gl/layers';
+import type {Feature, GeoJSON} from 'geojson';
+
+const DATA_URL =
+  'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/bart.geo.json';
+
+const INITIAL_VIEW_STATE = {
+  latitude: 37.74,
+  longitude: -122.4,
+  zoom: 11,
+  pitch: 0,
+  bearing: 0
+};
+
+const App = () => {
+  const [data, setData] = useState<GeoJSON | null>(null);
+
+  useEffect(() => {
+    fetch(DATA_URL)
+      .then(res => res.json())
+      .then(data => setData(data as GeoJSON));
+  }, []);
+
+  const layers = data
+    ? [
+        new GeoJsonLayer({
+          id: 'geojson-layer',
+          data,
+          stroked: false,
+          filled: true,
+          extruded: true,
+          pointType: 'circle',
+          lineWidthScale: 20,
+          lineWidthMinPixels: 4,
+          getFillColor: [160, 160, 180, 200],
+          getLineColor: (f: Feature) => {
+            const hex = f?.properties?.color;
+            if (!hex) return [0, 0, 0];
+            return hex.match(/[0-9a-f]{2}/g)!.map((x: string) => parseInt(x, 16));
+          },
+          getPointRadius: 200,
+          getLineWidth: 1,
+          getElevation: 30
+        })
+      ]
+    : [];
+
+  return (
+    <APIProvider apiKey={'Your API key here'}>
+      <DeckGL
+        initialViewState={INITIAL_VIEW_STATE}
+        layers={layers}
+        controller={true}
+        onViewStateChange={limitTiltRange}>
+        <Map
+          mapId={'4f6dde3310be51d7'}
+          gestureHandling={'greedy'}
+          disableDefaultUI={true}
+        />
+      </DeckGL>
+    </APIProvider>
+  );
+};
+
+export default App;
+```
+
+## Using GoogleMapsOverlay
+
+Alternatively, use the `GoogleMapsOverlay` from `@deck.gl/google-maps` to render deck.gl content via the Maps API `WebGlOverlayView`. This approach keeps Google Maps in control of the camera.
+
+### Creating the Overlay Component
+
+<Steps>
+
+<Step title="Install the package">
+First, install the deck.gl Google Maps integration:
+
+```bash
+npm install @deck.gl/google-maps
+```
+</Step>
+
+<Step title="Create the overlay component">
+Implement a component that manages the GoogleMapsOverlay:
+
+```tsx
+import {useEffect, useMemo} from 'react';
+import {useMap} from '@vis.gl/react-google-maps';
+import {GoogleMapsOverlay} from '@deck.gl/google-maps';
+import type {LayersList} from '@deck.gl/core';
+
+export type DeckglOverlayProps = {layers?: LayersList};
+
+export const DeckGlOverlay = ({layers}: DeckglOverlayProps) => {
+  // The GoogleMapsOverlay persists throughout the component lifetime
+  const deck = useMemo(() => new GoogleMapsOverlay({interleaved: true}), []);
+
+  // Add the overlay to the map once available
+  const map = useMap();
+  useEffect(() => {
+    deck.setMap(map);
+
+    return () => deck.setMap(null);
+  }, [deck, map]);
+
+  // Update layers when they change
+  useEffect(() => {
+    deck.setProps({layers});
+  }, [deck, layers]);
+
+  // No DOM rendered by this component
+  return null;
+};
+```
+</Step>
+
+<Step title="Use the overlay in your app">
+Add the `DeckGlOverlay` component as a child of `<Map>`:
+
+```tsx
+import React from 'react';
+import {APIProvider, Map} from '@vis.gl/react-google-maps';
+import {DeckGlOverlay} from './deckgl-overlay';
+import {GeoJsonLayer} from '@deck.gl/layers';
+
+const App = () => {
+  const deckGlLayers = [
+    new GeoJsonLayer({
+      id: 'my-layer',
+      data: 'https://example.com/data.geojson',
+      // ... layer properties
+    })
+  ];
+
+  return (
+    <APIProvider apiKey={'Your API key here'}>
+      <Map
+        defaultCenter={{lat: 37.74, lng: -122.4}}
+        defaultZoom={11}
+        mapId={'4f6dde3310be51d7'}>
+        <DeckGlOverlay layers={deckGlLayers} />
+      </Map>
+    </APIProvider>
+  );
+};
+
+export default App;
+```
+</Step>
+
+</Steps>
+
+## Choosing an Approach
+
+<Tabs>
+  <Tab title="Map as Child of DeckGL">
+    **Best for:**
+    - Applications where deck.gl is the primary visualization
+    - When you need deck.gl's camera controls
+    - Complex deck.gl interactions
+
+    **Characteristics:**
+    - deck.gl controls the camera
+    - Use `limitTiltRange` for compatibility
+    - Google Maps serves as base layer
+  </Tab>
+  
+  <Tab title="GoogleMapsOverlay">
+    **Best for:**
+    - Applications where Google Maps is primary
+    - When you want Google Maps camera controls
+    - Adding deck.gl visualizations to existing Google Maps apps
+
+    **Characteristics:**
+    - Google Maps controls the camera
+    - deck.gl renders via WebGlOverlayView
+    - Better integration with Google Maps UI controls
+  </Tab>
+</Tabs>
+
+## Performance Tips
+
+<Info>
+**Interleaved Rendering**: When using `GoogleMapsOverlay`, set `interleaved: true` for better performance and visual integration with Google Maps layers.
+</Info>
+
+<Note>
+**Layer Updates**: Both approaches efficiently update layers when data changes. Use React's memoization techniques to prevent unnecessary re-renders.
+</Note>
+
+## Additional Resources
+
+- [deck.gl Documentation](https://deck.gl/docs)
+- [deck.gl Layer Catalog](https://deck.gl/docs/api-reference/layers)
+- [Example: deck.gl Overlay](https://github.com/visgl/react-google-maps/tree/main/examples/deckgl-overlay)
+- [Google Maps WebGlOverlayView](https://developers.google.com/maps/documentation/javascript/webgl)

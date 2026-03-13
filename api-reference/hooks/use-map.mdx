@@ -1,0 +1,182 @@
+---
+title: 'useMap'
+description: 'Access Google Maps instances from anywhere in your React component tree'
+---
+
+The `useMap()` hook provides access to [`google.maps.Map`](https://developers.google.com/maps/documentation/javascript/reference/map#Map) instances created by a `Map` component within the `APIProvider` in your application.
+
+## Parameters
+
+<ParamField path="id" type="string" optional>
+  The id of the map instance to retrieve. If not specified, returns the parent map instance or the default map instance.
+</ParamField>
+
+## Returns
+
+<ResponseField name="map" type="google.maps.Map | null">
+  The Google Maps instance, or `null` if it can't be found.
+  
+  The returned map instance is determined as follows:
+  - If an `id` is specified, the map with that `id` is retrieved from the `APIProviderContext`
+  - When no `id` is specified:
+    - If there is a parent map instance, return it
+    - Otherwise, return the map with id `default` (maps without the `id` prop are registered with id `default`)
+</ResponseField>
+
+## Usage
+
+### Single Map Instance
+
+When there is only a single map within the `APIProvider`, the `useMap()` hook can be called without any arguments and the `Map` doesn't need an id.
+
+```tsx
+import { useMap } from '@vis.gl/react-google-maps';
+import { useEffect } from 'react';
+
+const MyComponent = () => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    // do something with the map instance
+    console.log('Map center:', map.getCenter());
+  }, [map]);
+
+  return <>...</>;
+};
+
+const App = () => {
+  return (
+    <APIProvider apiKey="YOUR_API_KEY">
+      <Map 
+        defaultCenter={{lat: 37.7749, lng: -122.4194}}
+        defaultZoom={10}
+      />
+      <MyComponent />
+    </APIProvider>
+  );
+};
+```
+
+### From Child Components
+
+Components added as children to the `Map` component can access the parent map directly:
+
+```tsx
+const ChildComponent = () => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!map) return;
+    
+    // Access the parent map instance
+    map.setZoom(15);
+  }, [map]);
+  
+  return null;
+};
+
+const App = () => (
+  <APIProvider apiKey="YOUR_API_KEY">
+    <Map defaultCenter={{lat: 37.7749, lng: -122.4194}} defaultZoom={10}>
+      <ChildComponent />
+    </Map>
+  </APIProvider>
+);
+```
+
+### Multiple Map Instances
+
+When there are multiple `Map` components in the `APIProvider`, they are only retrievable using the `useMap()` hook when an explicit id is specified on both the map and as a parameter of the hook.
+
+```tsx
+const MyComponent = () => {
+  const mainMap = useMap('main-map');
+  const miniMap = useMap('mini-map');
+
+  useEffect(() => {
+    if (!mainMap || !miniMap) return;
+
+    // Sync the mini map with the main map
+    mainMap.addListener('center_changed', () => {
+      miniMap.setCenter(mainMap.getCenter());
+    });
+  }, [mainMap, miniMap]);
+
+  return <>...</>;
+};
+
+const App = () => {
+  return (
+    <APIProvider apiKey="YOUR_API_KEY">
+      <Map 
+        id="main-map"
+        defaultCenter={{lat: 37.7749, lng: -122.4194}}
+        defaultZoom={10}
+      />
+      <Map 
+        id="mini-map"
+        defaultCenter={{lat: 37.7749, lng: -122.4194}}
+        defaultZoom={8}
+      />
+      <MyComponent />
+    </APIProvider>
+  );
+};
+```
+
+## Common Patterns
+
+### Adding Event Listeners
+
+```tsx
+const MapEventHandler = () => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const clickListener = map.addListener('click', (e) => {
+      console.log('Map clicked at:', e.latLng.toJSON());
+    });
+
+    return () => {
+      google.maps.event.removeListener(clickListener);
+    };
+  }, [map]);
+
+  return null;
+};
+```
+
+### Controlling Map View
+
+```tsx
+const MapControls = () => {
+  const map = useMap();
+
+  const panToLocation = (lat: number, lng: number) => {
+    if (!map) return;
+    map.panTo({lat, lng});
+  };
+
+  const zoomIn = () => {
+    if (!map) return;
+    map.setZoom((map.getZoom() || 10) + 1);
+  };
+
+  return (
+    <div>
+      <button onClick={() => panToLocation(37.7749, -122.4194)}>
+        Pan to San Francisco
+      </button>
+      <button onClick={zoomIn}>Zoom In</button>
+    </div>
+  );
+};
+```
+
+<Note>
+  The `useMap()` hook must be used within a component tree that is wrapped by an `APIProvider`. If the context cannot be retrieved, an error will be logged and `null` will be returned.
+</Note>

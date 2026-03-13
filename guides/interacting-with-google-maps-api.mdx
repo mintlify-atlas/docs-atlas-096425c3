@@ -1,0 +1,320 @@
+---
+title: 'Interacting with the Google Maps API'
+description: 'Learn how to interact with the Google Maps JavaScript API using hooks, refs, and custom libraries'
+---
+
+With the provided components, you can declaratively create a Google map or add markers. However, there are three main ways to interact with the Maps JavaScript API on a lower level:
+
+1. **Hooks** - Access map instances and load additional libraries
+2. **Refs** - Get direct access to marker instances
+3. **Custom Libraries** - Load and use Maps API libraries and services
+
+## Using Hooks
+
+Hooks provide additional functionality for the maps you create. The main hook is `useMap()`, which gives you access to the underlying `google.maps.Map` instance.
+
+### The useMap Hook
+
+Every child component wrapped in `<APIProvider>` has access to the map instance via the `useMap()` hook.
+
+```tsx
+import React, {useEffect} from 'react';
+import {APIProvider, Map, useMap} from '@vis.gl/react-google-maps';
+
+const MyComponent = () => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    // here you can interact with the imperative maps API
+    // For example, add event listeners or modify map properties
+  }, [map]);
+
+  return <></>;
+};
+
+const App = () => (
+  <APIProvider apiKey={'YOUR API KEY HERE'}>
+    <Map defaultCenter={{lat: 53.54992, lng: 10.00678}} defaultZoom={12}>
+      <MyComponent />
+    </Map>
+  </APIProvider>
+);
+```
+
+### The useMapsLibrary Hook
+
+The `useMapsLibrary()` hook loads additional parts of the Maps JavaScript API that aren't loaded by default, such as the Places Service or Geocoding Service.
+
+<Info>
+See [Other Maps JavaScript API Libraries](#other-maps-javascript-api-libraries-and-services) for detailed examples.
+</Info>
+
+## Using Refs
+
+The `<Marker>` and `<AdvancedMarker>` components accept a `ref` prop which provides access to the underlying Google Maps marker instances.
+
+### Accessing Marker Instances
+
+Here's how to use the `useMarkerRef` hook to get access to a marker instance:
+
+```tsx
+import React, {useEffect} from 'react';
+import {
+  APIProvider,
+  Map,
+  Marker,
+  useMarkerRef
+} from '@vis.gl/react-google-maps';
+
+const App = () => {
+  const [markerRef, marker] = useMarkerRef();
+
+  useEffect(() => {
+    if (!marker) {
+      return;
+    }
+
+    // do something with marker instance here
+    // For example: add event listeners or modify marker properties
+  }, [marker]);
+
+  return (
+    <APIProvider apiKey={'Your API key here'}>
+      <Map zoom={12} center={{lat: 53.54992, lng: 10.00678}}>
+        <Marker ref={markerRef} position={{lat: 53.54992, lng: 10.00678}} />
+      </Map>
+    </APIProvider>
+  );
+};
+
+export default App;
+```
+
+<Note>
+The same concept applies for `<AdvancedMarker>` using the `useAdvancedMarkerRef` hook.
+</Note>
+
+## Other Maps JavaScript API Libraries and Services
+
+The Maps JavaScript API has many [additional libraries](https://developers.google.com/maps/documentation/javascript/libraries) for geocoding, routing, the Places API, Street View, and more. These libraries are not loaded by default.
+
+### Loading Additional Libraries
+
+Use the `useMapsLibrary()` hook to handle dynamic loading of these libraries.
+
+<Steps>
+
+<Step title="Import the hook">
+Import `useMapsLibrary` from the package:
+
+```tsx
+import {useMapsLibrary, useMap} from '@vis.gl/react-google-maps';
+```
+</Step>
+
+<Step title="Load the library">
+Call the hook with the library name. The component automatically re-renders when loading completes:
+
+```tsx
+const MyComponent = () => {
+  const map = useMap();
+  const placesLibrary = useMapsLibrary('places');
+  const [placesService, setPlacesService] = useState(null);
+
+  useEffect(() => {
+    if (!placesLibrary || !map) return;
+
+    // When placesLibrary is loaded, create the service
+    setPlacesService(new placesLibrary.PlacesService(map));
+  }, [placesLibrary, map]);
+
+  useEffect(() => {
+    if (!placesService) return;
+
+    // ...use placesService...
+  }, [placesService]);
+
+  return <></>;
+};
+```
+</Step>
+
+<Step title="Create a custom hook (optional)">
+Extract the logic into a reusable custom hook:
+
+```tsx
+function usePlacesService() {
+  const map = useMap();
+  const placesLibrary = useMapsLibrary('places');
+  const [placesService, setPlacesService] = useState(null);
+
+  useEffect(() => {
+    if (!placesLibrary || !map) return;
+
+    setPlacesService(new placesLibrary.PlacesService(map));
+  }, [placesLibrary, map]);
+
+  return placesService;
+}
+
+const MyComponent = () => {
+  const placesService = usePlacesService();
+
+  useEffect(() => {
+    if (!placesService) return;
+
+    // ... use placesService ...
+  }, [placesService]);
+
+  return <></>;
+};
+```
+</Step>
+
+</Steps>
+
+### Example: Directions Service
+
+Here's a complete example using the Routes library for directions:
+
+```tsx
+import React, {useEffect, useState} from 'react';
+import {APIProvider, Map, useMapsLibrary, useMap} from '@vis.gl/react-google-maps';
+
+function Directions() {
+  const map = useMap();
+  const routesLibrary = useMapsLibrary('routes');
+  const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService>();
+  const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer>();
+  const [routes, setRoutes] = useState<google.maps.DirectionsRoute[]>([]);
+
+  // Initialize directions service and renderer
+  useEffect(() => {
+    if (!routesLibrary || !map) return;
+    
+    setDirectionsService(new routesLibrary.DirectionsService());
+    setDirectionsRenderer(new routesLibrary.DirectionsRenderer({map}));
+  }, [routesLibrary, map]);
+
+  // Use directions service
+  useEffect(() => {
+    if (!directionsService || !directionsRenderer) return;
+
+    directionsService
+      .route({
+        origin: '100 Front St, Toronto ON',
+        destination: '500 College St, Toronto ON',
+        travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: true
+      })
+      .then(response => {
+        directionsRenderer.setDirections(response);
+        setRoutes(response.routes);
+      });
+
+    return () => directionsRenderer.setMap(null);
+  }, [directionsService, directionsRenderer]);
+
+  return (
+    <div>
+      {routes.map(route => (
+        <div key={route.summary}>
+          <h3>{route.summary}</h3>
+          <p>Distance: {route.legs[0].distance?.text}</p>
+          <p>Duration: {route.legs[0].duration?.text}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const App = () => (
+  <APIProvider apiKey={'YOUR API KEY'}>
+    <Map defaultCenter={{lat: 43.65, lng: -79.38}} defaultZoom={9}>
+      <Directions />
+    </Map>
+  </APIProvider>
+);
+```
+
+### Example: Heatmap Visualization
+
+Here's how to use the Visualization library for heatmaps:
+
+```tsx
+import {useEffect, useMemo} from 'react';
+import {useMap, useMapsLibrary} from '@vis.gl/react-google-maps';
+import {FeatureCollection, Point, GeoJsonProperties} from 'geojson';
+
+type HeatmapProps = {
+  geojson: FeatureCollection<Point, GeoJsonProperties>;
+  radius: number;
+  opacity: number;
+};
+
+const Heatmap = ({geojson, radius, opacity}: HeatmapProps) => {
+  const map = useMap();
+  const visualization = useMapsLibrary('visualization');
+
+  const heatmap = useMemo(() => {
+    if (!visualization) return null;
+
+    return new google.maps.visualization.HeatmapLayer({
+      radius: radius,
+      opacity: opacity
+    });
+  }, [visualization, radius, opacity]);
+
+  useEffect(() => {
+    if (!heatmap) return;
+
+    heatmap.setData(
+      geojson.features.map(point => {
+        const [lng, lat] = point.geometry.coordinates;
+
+        return {
+          location: new google.maps.LatLng(lat, lng),
+          weight: point.properties?.mag
+        };
+      })
+    );
+  }, [heatmap, geojson]);
+
+  useEffect(() => {
+    if (!heatmap) return;
+
+    heatmap.setMap(map);
+
+    return () => {
+      heatmap.setMap(null);
+    };
+  }, [heatmap, map]);
+
+  return null;
+};
+
+export default Heatmap;
+```
+
+## Available Libraries
+
+The following libraries can be loaded using `useMapsLibrary()`:
+
+- `core` - Core Maps functionality
+- `maps` - Map types and controls
+- `places` - Places Service
+- `geocoding` - Geocoding Service
+- `routes` - Directions and Distance Matrix
+- `marker` - Advanced Markers
+- `geometry` - Geometry utilities
+- `elevation` - Elevation Service
+- `streetView` - Street View
+- `drawing` - Drawing tools
+- `visualization` - Heatmaps and visualization
+- `maps3d` - 3D Maps
+
+<Warning>
+Always check if the library and map instances are available before using them to avoid runtime errors.
+</Warning>

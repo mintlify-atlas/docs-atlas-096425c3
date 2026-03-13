@@ -1,0 +1,304 @@
+---
+title: Map3D
+description: Component to render photorealistic 3D maps with the Google Maps JavaScript API
+---
+
+# Map3D
+
+The `Map3D` component renders a 3D map with photorealistic 3D imagery and terrain. It provides full camera control including altitude, range, heading, tilt, and roll.
+
+## Usage
+
+```tsx
+import {APIProvider, Map3D} from '@vis.gl/react-google-maps';
+
+const App = () => (
+  <APIProvider apiKey={process.env.GOOGLE_MAPS_API_KEY}>
+    <Map3D
+      mode="SATELLITE"
+      defaultCenter={{lat: 37.7749, lng: -122.4194, altitude: 0}}
+      defaultRange={1000}
+      defaultHeading={0}
+      defaultTilt={60}
+    />
+  </APIProvider>
+);
+```
+
+## Props
+
+### Camera Control
+
+<ParamField path="center" type="google.maps.LatLngAltitude | google.maps.LatLngAltitudeLiteral">
+  Camera center position including altitude.
+  
+  Example: `{lat: 37.7749, lng: -122.4194, altitude: 500}`
+</ParamField>
+
+<ParamField path="heading" type="number">
+  Camera heading in degrees (0-360), clockwise from north.
+</ParamField>
+
+<ParamField path="tilt" type="number">
+  Camera tilt angle in degrees (0-90).
+  
+  - `0`: Looking straight down
+  - `90`: Looking at the horizon
+</ParamField>
+
+<ParamField path="range" type="number">
+  Distance from the camera to the center point in meters.
+</ParamField>
+
+<ParamField path="roll" type="number">
+  Camera roll angle in degrees. Rotates the view around the viewing direction.
+</ParamField>
+
+<ParamField path="defaultCenter" type="google.maps.LatLngAltitudeLiteral">
+  Initial center for uncontrolled mode.
+  
+  Example: `{lat: 37.7749, lng: -122.4194, altitude: 0}`
+</ParamField>
+
+<ParamField path="defaultHeading" type="number">
+  Initial heading for uncontrolled mode.
+</ParamField>
+
+<ParamField path="defaultTilt" type="number">
+  Initial tilt for uncontrolled mode.
+</ParamField>
+
+<ParamField path="defaultRange" type="number">
+  Initial range for uncontrolled mode.
+</ParamField>
+
+<ParamField path="defaultRoll" type="number">
+  Initial roll for uncontrolled mode.
+</ParamField>
+
+### Map Configuration
+
+<ParamField path="mode" type="MapMode" required>
+  Map rendering mode.
+  
+  - `MapMode.SATELLITE`: Satellite imagery
+  - `MapMode.HYBRID`: Satellite with street overlay
+  
+  Import `MapMode` from `'@vis.gl/react-google-maps'`
+</ParamField>
+
+<ParamField path="id" type="string">
+  Identifier for this map. Required when using multiple maps.
+</ParamField>
+
+<ParamField path="style" type="React.CSSProperties">
+  CSS styles for the map container.
+</ParamField>
+
+<ParamField path="className" type="string">
+  CSS class name for the map container.
+</ParamField>
+
+<ParamField path="gestureHandling" type="GestureHandling">
+  How gestures are handled.
+  
+  - `GestureHandling.AUTO`: Automatic (default)
+  - `GestureHandling.COOPERATIVE`: Requires Ctrl/Cmd for scroll
+  - `GestureHandling.GREEDY`: Always captures gestures
+  
+  Import `GestureHandling` from `'@vis.gl/react-google-maps'`
+</ParamField>
+
+### Events
+
+<ParamField path="onCameraChanged" type="(event: Map3DCameraChangedEvent) => void">
+  Fired when the camera position changes.
+</ParamField>
+
+<ParamField path="onClick" type="(event: Map3DClickEvent) => void">
+  Fired when the map is clicked.
+</ParamField>
+
+<ParamField path="onSteadyChange" type="(event: Map3DSteadyChangeEvent) => void">
+  Fired when the map transitions between moving and steady states.
+</ParamField>
+
+## Examples
+
+### Basic 3D Map
+
+```tsx
+import {APIProvider, Map3D, MapMode} from '@vis.gl/react-google-maps';
+
+<APIProvider apiKey={process.env.GOOGLE_MAPS_API_KEY}>
+  <Map3D
+    mode={MapMode.SATELLITE}
+    defaultCenter={{lat: 37.7749, lng: -122.4194, altitude: 0}}
+    defaultRange={1000}
+    defaultHeading={0}
+    defaultTilt={60}
+    style={{width: '100%', height: '600px'}}
+  />
+</APIProvider>
+```
+
+### Controlled 3D Map
+
+```tsx
+const [cameraProps, setCameraProps] = useState({
+  center: {lat: 37.7749, lng: -122.4194, altitude: 0},
+  range: 1000,
+  heading: 0,
+  tilt: 60,
+  roll: 0
+});
+
+<Map3D
+  mode={MapMode.SATELLITE}
+  {...cameraProps}
+  onCameraChanged={(e) => setCameraProps(e.detail)}
+/>
+```
+
+### Map3D with Markers
+
+```tsx
+import {Map3D, Marker3D, MapMode} from '@vis.gl/react-google-maps';
+
+<Map3D
+  mode={MapMode.HYBRID}
+  defaultCenter={{lat: 37.7749, lng: -122.4194, altitude: 0}}
+  defaultRange={2000}
+  defaultTilt={45}
+>
+  <Marker3D 
+    position={{lat: 37.7749, lng: -122.4194}}
+    label="SF"
+  />
+</Map3D>
+```
+
+### Using Ref for Camera Animations
+
+```tsx
+import {useRef} from 'react';
+import {Map3D, Map3DRef, MapMode} from '@vis.gl/react-google-maps';
+
+const Map3DWithRef = () => {
+  const mapRef = useRef<Map3DRef>(null);
+
+  const flyToLocation = () => {
+    mapRef.current?.flyCameraTo({
+      endCamera: {
+        center: {lat: 40.7128, lng: -74.0060, altitude: 0},
+        range: 1500,
+        heading: 0,
+        tilt: 67.5
+      },
+      durationMillis: 3000
+    });
+  };
+
+  const flyAround = () => {
+    mapRef.current?.flyCameraAround({
+      camera: {
+        center: {lat: 37.7749, lng: -122.4194, altitude: 0},
+        range: 500,
+        tilt: 67.5
+      },
+      durationMillis: 20000,
+      rounds: 2
+    });
+  };
+
+  return (
+    <>
+      <div>
+        <button onClick={flyToLocation}>Fly to NYC</button>
+        <button onClick={flyAround}>Fly Around</button>
+      </div>
+      <Map3D
+        ref={mapRef}
+        mode={MapMode.SATELLITE}
+        defaultCenter={{lat: 37.7749, lng: -122.4194, altitude: 0}}
+        defaultRange={1000}
+        defaultTilt={60}
+      />
+    </>
+  );
+};
+```
+
+### Custom Gesture Handling
+
+```tsx
+import {Map3D, MapMode, GestureHandling} from '@vis.gl/react-google-maps';
+
+<Map3D
+  mode={MapMode.SATELLITE}
+  gestureHandling={GestureHandling.COOPERATIVE}
+  defaultCenter={{lat: 37.7749, lng: -122.4194, altitude: 0}}
+  defaultRange={1000}
+/>
+```
+
+## Ref Methods
+
+When using a ref, you can access these methods:
+
+### `flyCameraTo(options)`
+
+Animate the camera to a destination.
+
+```tsx
+mapRef.current?.flyCameraTo({
+  endCamera: {
+    center: {lat: 40.7128, lng: -74.0060, altitude: 0},
+    range: 2000,
+    heading: 45,
+    tilt: 60
+  },
+  durationMillis: 5000
+});
+```
+
+### `flyCameraAround(options)`
+
+Animate the camera around a center point.
+
+```tsx
+mapRef.current?.flyCameraAround({
+  camera: {
+    center: {lat: 37.7749, lng: -122.4194, altitude: 0},
+    range: 500,
+    tilt: 67.5
+  },
+  durationMillis: 15000,
+  rounds: 1.5
+});
+```
+
+### `stopCameraAnimation()`
+
+Stop any ongoing camera animation.
+
+```tsx
+mapRef.current?.stopCameraAnimation();
+```
+
+## Notes
+
+- 3D maps require the `maps3d` library to be loaded
+- Photorealistic 3D imagery is not available for all locations
+- Performance may vary based on device capabilities
+- The default container style is `width: 100%; height: 100%;`
+
+## Related Components
+
+- [`Marker3D`](/api-reference/components/marker-3d) - 3D markers
+- [`Popover3D`](/api-reference/components/popover-3d) - Info windows for 3D maps
+- [`Map`](/api-reference/components/map) - 2D maps
+
+## Related Hooks
+
+- [`useMap3D()`](/api-reference/hooks/use-map-3d) - Access Map3D instance from children

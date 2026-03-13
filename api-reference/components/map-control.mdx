@@ -1,0 +1,107 @@
+---
+title: MapControl
+description: Component to add custom controls to specific positions on the map
+---
+
+# MapControl
+
+The `MapControl` component allows you to add custom UI controls to specific positions on a Google Map. It uses React portals to render children into the map's control containers.
+
+## Usage
+
+```tsx
+import {Map, MapControl, ControlPosition} from '@vis.gl/react-google-maps';
+
+const MapWithCustomControl = () => (
+  <Map defaultCenter={{lat: 37.7749, lng: -122.4194}} defaultZoom={12}>
+    <MapControl position={ControlPosition.TOP_CENTER}>
+      <div style={{background: 'white', padding: '10px', margin: '10px'}}>
+        <h3>Custom Control</h3>
+        <button onClick={() => console.log('Clicked!')}>Click me</button>
+      </div>
+    </MapControl>
+  </Map>
+);
+```
+
+## Props
+
+<ParamField path="position" type="ControlPosition" required>
+  Position on the map where the control should appear.
+  
+  Available positions:
+  - `ControlPosition.TOP_LEFT`
+  - `ControlPosition.TOP_CENTER` / `ControlPosition.TOP`
+  - `ControlPosition.TOP_RIGHT`
+  - `ControlPosition.LEFT_TOP` / `ControlPosition.LEFT`
+  - `ControlPosition.LEFT_CENTER`
+  - `ControlPosition.LEFT_BOTTOM`
+  - `ControlPosition.RIGHT_TOP` / `ControlPosition.RIGHT`
+  - `ControlPosition.RIGHT_CENTER`
+  - `ControlPosition.RIGHT_BOTTOM`
+  - `ControlPosition.BOTTOM_LEFT`
+  - `ControlPosition.BOTTOM_CENTER` / `ControlPosition.BOTTOM`
+  - `ControlPosition.BOTTOM_RIGHT`
+  - `ControlPosition.CENTER`
+  
+  Import `ControlPosition` from `'@vis.gl/react-google-maps'`
+</ParamField>
+
+<ParamField path="children" type="React.ReactNode">
+  The custom control UI to render at the specified position.
+</ParamField>
+
+## Examples
+
+### Zoom Control
+
+```tsx
+<MapControl position={ControlPosition.RIGHT_CENTER}>
+  <div className="zoom-control">
+    <button onClick={() => map.setZoom(map.getZoom() + 1)}>+</button>
+    <button onClick={() => map.setZoom(map.getZoom() - 1)}>-</button>
+  </div>
+</MapControl>
+```
+
+### Search Box
+
+```tsx
+<MapControl position={ControlPosition.TOP_LEFT}>
+  <div style={{margin: '10px'}}>
+    <input 
+      type="text" 
+      placeholder="Search location..."
+      style={{padding: '10px', width: '300px'}}
+    />
+  </div>
+</MapControl>
+```
+
+### Legend
+
+```tsx
+<MapControl position={ControlPosition.BOTTOM_LEFT}>
+  <div className="legend" style={{
+    background: 'white',
+    padding: '15px',
+    margin: '10px',
+    borderRadius: '4px'
+  }}>
+    <h4>Legend</h4>
+    <div><span style={{color: 'red'}}>●</span> Important</div>
+    <div><span style={{color: 'blue'}}>●</span> Normal</div>
+  </div>
+</MapControl>
+```
+
+## Notes
+
+- The `MapControl` component must be a child of a `Map` component
+- Controls are automatically added and removed when the component mounts/unmounts
+- You can have multiple `MapControl` components at different positions
+- Make sure to style your controls appropriately for the map background
+
+## Related Components
+
+- [`Map`](/api-reference/components/map) - The parent component that hosts controls

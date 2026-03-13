@@ -1,0 +1,296 @@
+---
+title: InfoWindow
+description: Component to display information windows attached to markers or map positions
+---
+
+# InfoWindow
+
+The `InfoWindow` component displays a popup window with custom content, either anchored to a marker or at a specific map position.
+
+## Usage
+
+```tsx
+import {Map, AdvancedMarker, InfoWindow} from '@vis.gl/react-google-maps';
+
+const [open, setOpen] = useState(false);
+const [markerRef, marker] = useAdvancedMarkerRef();
+
+<Map defaultCenter={{lat: 37.7749, lng: -122.4194}} defaultZoom={12}>
+  <AdvancedMarker 
+    ref={markerRef}
+    position={{lat: 37.7749, lng: -122.4194}}
+    onClick={() => setOpen(true)}
+  />
+  {open && (
+    <InfoWindow 
+      anchor={marker}
+      onCloseClick={() => setOpen(false)}
+    >
+      <div>
+        <h3>San Francisco</h3>
+        <p>Welcome to San Francisco!</p>
+      </div>
+    </InfoWindow>
+  )}
+</Map>
+```
+
+## Props
+
+### Positioning
+
+<ParamField path="anchor" type="google.maps.Marker | google.maps.marker.AdvancedMarkerElement | null">
+  Marker to anchor the InfoWindow to. When provided, the InfoWindow opens near the marker.
+  
+  Use with `useMarkerRef()` or `useAdvancedMarkerRef()` hooks.
+</ParamField>
+
+<ParamField path="position" type="google.maps.LatLngLiteral">
+  Map position for the InfoWindow. Used when no anchor is provided.
+  
+  Example: `{lat: 37.7749, lng: -122.4194}`
+</ParamField>
+
+<ParamField path="pixelOffset" type="[number, number]">
+  Offset in pixels `[x, y]` from the anchor point or position.
+  
+  Example: `[0, -30]` to move 30 pixels up
+</ParamField>
+
+### Content
+
+<ParamField path="children" type="React.ReactNode">
+  Content to display inside the InfoWindow body.
+</ParamField>
+
+<ParamField path="headerContent" type="React.ReactNode | string">
+  Content for the InfoWindow header. Can be a string or React elements.
+</ParamField>
+
+<ParamField path="className" type="string">
+  CSS class name for the InfoWindow content element.
+</ParamField>
+
+<ParamField path="style" type="React.CSSProperties">
+  Inline styles for the InfoWindow content element.
+</ParamField>
+
+### Behavior
+
+<ParamField path="shouldFocus" type="boolean">
+  Whether the InfoWindow should receive focus when opened.
+  
+  Default: `true`
+</ParamField>
+
+<ParamField path="ariaLabel" type="string">
+  ARIA label for accessibility.
+</ParamField>
+
+<ParamField path="disableAutoPan" type="boolean">
+  Disable automatic panning to make the InfoWindow visible.
+  
+  Default: `false`
+</ParamField>
+
+<ParamField path="maxWidth" type="number">
+  Maximum width of the InfoWindow in pixels.
+</ParamField>
+
+<ParamField path="minWidth" type="number">
+  Minimum width of the InfoWindow in pixels.
+</ParamField>
+
+### Events
+
+<ParamField path="onCloseClick" type="() => void">
+  Fired when the close button (X) is clicked.
+</ParamField>
+
+<ParamField path="onClose" type="() => void">
+  Fired when the InfoWindow closes for any reason.
+</ParamField>
+
+## Examples
+
+### InfoWindow Anchored to AdvancedMarker
+
+```tsx
+import {AdvancedMarker, InfoWindow, useAdvancedMarkerRef} from '@vis.gl/react-google-maps';
+
+const MarkerWithInfo = () => {
+  const [markerRef, marker] = useAdvancedMarkerRef();
+  const [infoOpen, setInfoOpen] = useState(false);
+
+  return (
+    <>
+      <AdvancedMarker
+        ref={markerRef}
+        position={{lat: 37.7749, lng: -122.4194}}
+        onClick={() => setInfoOpen(true)}
+      />
+      {infoOpen && (
+        <InfoWindow
+          anchor={marker}
+          onCloseClick={() => setInfoOpen(false)}
+        >
+          <div style={{padding: '10px'}}>
+            <h3>Location Details</h3>
+            <p>This is San Francisco</p>
+          </div>
+        </InfoWindow>
+      )}
+    </>
+  );
+};
+```
+
+### InfoWindow at Map Position
+
+```tsx
+const [position, setPosition] = useState(null);
+
+<Map 
+  onClick={(e) => setPosition(e.detail.latLng)}
+  defaultCenter={{lat: 37.7749, lng: -122.4194}}
+  defaultZoom={12}
+>
+  {position && (
+    <InfoWindow 
+      position={position}
+      onCloseClick={() => setPosition(null)}
+    >
+      <div>
+        Clicked at: {position.lat.toFixed(4)}, {position.lng.toFixed(4)}
+      </div>
+    </InfoWindow>
+  )}
+</Map>
+```
+
+### InfoWindow with Header
+
+```tsx
+<InfoWindow
+  anchor={marker}
+  headerContent="Location Information"
+  onCloseClick={() => setOpen(false)}
+>
+  <div>
+    <p>Address: 123 Main St</p>
+    <p>City: San Francisco</p>
+    <button onClick={handleDirections}>Get Directions</button>
+  </div>
+</InfoWindow>
+```
+
+### InfoWindow with Custom Styling
+
+```tsx
+<InfoWindow
+  anchor={marker}
+  className="custom-info-window"
+  style={{
+    padding: '20px',
+    maxWidth: '300px'
+  }}
+  maxWidth={320}
+  onCloseClick={() => setOpen(false)}
+>
+  <div>
+    <img src="/location.jpg" style={{width: '100%'}} />
+    <h3 style={{margin: '10px 0'}}>Beautiful Location</h3>
+    <p>Description of this wonderful place...</p>
+  </div>
+</InfoWindow>
+```
+
+### InfoWindow with Pixel Offset
+
+```tsx
+<InfoWindow
+  anchor={marker}
+  pixelOffset={[0, -40]}
+  onCloseClick={() => setOpen(false)}
+>
+  <div>Offset above the marker</div>
+</InfoWindow>
+```
+
+### InfoWindow Anchored to Legacy Marker
+
+```tsx
+import {Marker, InfoWindow, useMarkerRef} from '@vis.gl/react-google-maps';
+
+const LegacyMarkerWithInfo = () => {
+  const [markerRef, marker] = useMarkerRef();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Marker
+        ref={markerRef}
+        position={{lat: 37.7749, lng: -122.4194}}
+        onClick={() => setOpen(true)}
+      />
+      {open && (
+        <InfoWindow
+          anchor={marker}
+          onCloseClick={() => setOpen(false)}
+        >
+          <div>Legacy marker info</div>
+        </InfoWindow>
+      )}
+    </>
+  );
+};
+```
+
+### Multiple InfoWindows
+
+```tsx
+const locations = [
+  {id: 1, position: {lat: 37.7749, lng: -122.4194}, name: 'SF'},
+  {id: 2, position: {lat: 37.7849, lng: -122.4094}, name: 'Oakland'},
+];
+
+const [selectedId, setSelectedId] = useState(null);
+
+{locations.map(loc => {
+  const [markerRef, marker] = useAdvancedMarkerRef();
+  
+  return (
+    <React.Fragment key={loc.id}>
+      <AdvancedMarker
+        ref={markerRef}
+        position={loc.position}
+        onClick={() => setSelectedId(loc.id)}
+      />
+      {selectedId === loc.id && (
+        <InfoWindow
+          anchor={marker}
+          onCloseClick={() => setSelectedId(null)}
+        >
+          <div>{loc.name}</div>
+        </InfoWindow>
+      )}
+    </React.Fragment>
+  );
+})}
+```
+
+## Notes
+
+- InfoWindow content is rendered via React portals
+- Only one InfoWindow can be open at a time per marker
+- The InfoWindow automatically pans the map to be fully visible (unless `disableAutoPan` is true)
+- When anchored to AdvancedMarker with custom content, the InfoWindow position is automatically adjusted
+
+## Related Components
+
+- [`AdvancedMarker`](/api-reference/components/advanced-marker) - Advanced markers for cloud-styled maps
+- [`Marker`](/api-reference/components/marker) - Legacy markers
+
+## Related Hooks
+
+- [`useMap()`](/api-reference/hooks/use-map) - Access the map instance

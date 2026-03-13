@@ -1,0 +1,120 @@
+---
+title: APIProvider
+description: Component to load the Google Maps JavaScript API and provide context for other components
+---
+
+# APIProvider
+
+The `APIProvider` component loads the Google Maps JavaScript API and provides context information for all other components and hooks in this library.
+
+It should be added at the top level of your application (typically near the root of your component tree), and will render all child components unmodified. Re-renders only occur when the loading status of the Maps JavaScript API changes.
+
+## Usage
+
+```tsx
+import {APIProvider, Map} from '@vis.gl/react-google-maps';
+
+const App = () => (
+  <APIProvider apiKey={process.env.GOOGLE_MAPS_API_KEY}>
+    <Map zoom={10} center={{lat: 53.54992, lng: 10.00678}} />
+  </APIProvider>
+);
+
+export default App;
+```
+
+<Note>
+  The Maps JavaScript API can only be loaded once, and settings like language and region cannot be changed after loading. Make sure all props are set to their final values when the APIProvider is first rendered.
+</Note>
+
+## Props
+
+<ParamField path="apiKey" type="string" required>
+  Your Google Maps Platform API Key. Required to load the Maps JavaScript API.
+  [Get an API key](https://developers.google.com/maps/documentation/javascript/get-api-key)
+</ParamField>
+
+<ParamField path="libraries" type="string[]">
+  List of additional libraries to load immediately. Libraries can also be loaded later using the `useMapsLibrary` hook.
+  
+  Example: `['places', 'geometry']`
+</ParamField>
+
+<ParamField path="version" type="string">
+  Specific version of the Google Maps JavaScript API to use. Defaults to `'weekly'`.
+  
+  [Read more about versioning](https://developers.google.com/maps/documentation/javascript/versions)
+</ParamField>
+
+<ParamField path="region" type="string">
+  Region code to use. This alters the map's behavior based on a given country or territory.
+  
+  [Read more about localization](https://developers.google.com/maps/documentation/javascript/localization#Region)
+</ParamField>
+
+<ParamField path="language" type="string">
+  Language to use for the map. Affects all text content and service responses.
+  
+  [Read more about localization](https://developers.google.com/maps/documentation/javascript/localization)
+</ParamField>
+
+<ParamField path="authReferrerPolicy" type="string">
+  Can be set to `'origin'` to limit the amount of data sent when authorizing requests.
+  
+  Useful if your API key is configured for an entire subdomain.
+</ParamField>
+
+<ParamField path="channel" type="number">
+  Numeric channel for tracking usage (0-999).
+  
+  [Read more about channel tracking](https://developers.google.com/maps/reporting-and-monitoring/reporting#usage-tracking-per-channel)
+</ParamField>
+
+<ParamField path="solutionChannel" type="string">
+  Solution channel identifier for usage tracking. Set to empty string to opt out.
+  
+  Default: `'GMP_visgl_rgmlibrary_v1_default'`
+</ParamField>
+
+<ParamField path="disableUsageAttribution" type="boolean">
+  Set to `true` to opt out of sending usage attribution IDs.
+  
+  Default: `false`
+</ParamField>
+
+<ParamField path="fetchAppCheckToken" type="() => Promise<google.maps.MapsAppCheckTokenResult>">
+  Function that returns a Promise resolving to a Firebase App Check token.
+  
+  When provided, helps protect your API key by blocking traffic from unauthorized sources.
+  
+  [Read more about App Check](https://developers.google.com/maps/documentation/javascript/maps-app-check)
+</ParamField>
+
+<ParamField path="onLoad" type="() => void">
+  Callback fired once the Maps JavaScript API has finished loading.
+</ParamField>
+
+<ParamField path="onError" type="(error: unknown) => void">
+  Callback fired if there is an error loading the Maps JavaScript API.
+</ParamField>
+
+## Example with Multiple Options
+
+```tsx
+<APIProvider
+  apiKey={process.env.GOOGLE_MAPS_API_KEY}
+  libraries={['places', 'geometry']}
+  language="en"
+  region="US"
+  onLoad={() => console.log('Maps API loaded')}
+  onError={(error) => console.error('Error loading Maps API:', error)}
+>
+  {/* Your map components */}
+</APIProvider>
+```
+
+## Related Hooks
+
+- [`useApiIsLoaded()`](/api-reference/hooks/use-api-is-loaded) - Check if the API is loaded
+- [`useApiLoadingStatus()`](/api-reference/hooks/use-api-loading-status) - Get the current loading status
+- [`useMapsLibrary()`](/api-reference/hooks/use-maps-library) - Load additional libraries

@@ -1,0 +1,542 @@
+---
+title: Advanced Features
+description: Explore advanced capabilities including clustering, heatmaps, directions, and 3D maps
+---
+
+This guide covers advanced features and integrations available in React Google Maps.
+
+## Marker Clustering
+
+Efficiently display thousands of markers by grouping nearby markers into clusters.
+
+### Basic Clustering Example
+
+```tsx
+import React, {useEffect, useState} from 'react';
+import {APIProvider, Map} from '@vis.gl/react-google-maps';
+import {ClusteredTreeMarkers} from './clustered-tree-markers';
+import {loadTreeDataset, Tree} from './trees';
+
+const App = () => {
+  const [trees, setTrees] = useState<Tree[]>();
+
+  useEffect(() => {
+    loadTreeDataset().then(data => setTrees(data));
+  }, []);
+
+  return (
+    <APIProvider apiKey={API_KEY}>
+      <Map
+        mapId={'bf51a910020fa25a'}
+        defaultCenter={{lat: 43.64, lng: -79.41}}
+        defaultZoom={10}
+        gestureHandling={'greedy'}
+        disableDefaultUI>
+        {trees && <ClusteredTreeMarkers trees={trees} />}
+      </Map>
+    </APIProvider>
+  );
+};
+```
+
+### Custom Cluster Markers
+
+Create custom cluster markers with custom styling:
+
+```tsx
+import {AdvancedMarker} from '@vis.gl/react-google-maps';
+import Supercluster from 'supercluster';
+
+type ClusterMarkerProps = {
+  cluster: Supercluster.ClusterFeature<Supercluster.AnyProps>;
+  onClick: () => void;
+};
+
+function ClusterMarker({cluster, onClick}: ClusterMarkerProps) {
+  const {cluster: isCluster, point_count: pointCount} = cluster.properties;
+  const [lng, lat] = cluster.geometry.coordinates;
+
+  if (isCluster) {
+    return (
+      <AdvancedMarker
+        position={{lat, lng}}
+        onClick={onClick}>
+        <div
+          style={{
+            width: `${10 + (pointCount / 100) * 40}px`,
+            height: `${10 + (pointCount / 100) * 40}px`,
+            background: '#1dbe80',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}>
+          {pointCount}
+        </div>
+      </AdvancedMarker>
+    );
+  }
+
+  return <AdvancedMarker position={{lat, lng}} />;
+}
+```
+
+<Tip>
+  The library supports both built-in clustering with MarkerClusterer and custom clustering with libraries like Supercluster.
+</Tip>
+
+## Heatmap
+
+Visualize data density using heatmap layers:
+
+```tsx
+import React, {useEffect, useState} from 'react';
+import {APIProvider, Map} from '@vis.gl/react-google-maps';
+import Heatmap from './heatmap';
+import {loadEarthquakeGeojson} from './earthquakes';
+
+const App = () => {
+  const [radius, setRadius] = useState(25);
+  const [opacity, setOpacity] = useState(0.8);
+  const [earthquakesGeojson, setEarthquakesGeojson] = useState();
+
+  useEffect(() => {
+    loadEarthquakeGeojson().then(data => setEarthquakesGeojson(data));
+  }, []);
+
+  return (
+    <APIProvider apiKey={API_KEY}>
+      <Map
+        mapId={'7a9e2ebecd32a903'}
+        defaultCenter={{lat: 40.7749, lng: -130.4194}}
+        defaultZoom={3}
+        gestureHandling={'greedy'}
+        disableDefaultUI={true}
+      />
+
+      {earthquakesGeojson && (
+        <Heatmap
+          geojson={earthquakesGeojson}
+          radius={radius}
+          opacity={opacity}
+        />
+      )}
+    </APIProvider>
+  );
+};
+```
+
+### Heatmap Component Implementation
+
+```tsx
+import {useEffect, useMemo} from 'react';
+import {useMap, useMapsLibrary} from '@vis.gl/react-google-maps';
+
+type HeatmapProps = {
+  geojson: any;
+  radius?: number;
+  opacity?: number;
+};
+
+function Heatmap({geojson, radius = 20, opacity = 0.6}: HeatmapProps) {
+  const map = useMap();
+  const visualization = useMapsLibrary('visualization');
+
+  const heatmap = useMemo(() => {
+    if (!visualization) return null;
+
+    const data = geojson.features.map((feature: any) => {
+      const [lng, lat] = feature.geometry.coordinates;
+      return new google.maps.LatLng(lat, lng);
+    });
+
+    return new visualization.HeatmapLayer({
+      data,
+      radius,
+      opacity
+    });
+  }, [visualization, geojson]);
+
+  useEffect(() => {
+    if (!heatmap) return;
+    heatmap.setMap(map);
+    return () => heatmap.setMap(null);
+  }, [map, heatmap]);
+
+  useEffect(() => {
+    if (!heatmap) return;
+    heatmap.setOptions({radius, opacity});
+  }, [heatmap, radius, opacity]);
+
+  return null;
+}
+```
+
+## Directions & Routes
+
+Display routes and directions between locations:
+
+```tsx
+import React, {useEffect, useState} from 'react';
+import {
+  APIProvider,
+  Map,
+  useMapsLibrary,
+  useMap
+} from '@vis.gl/react-google-maps';
+
+const App = () => (
+  <APIProvider apiKey={API_KEY}>
+    <Map
+      defaultCenter={{lat: 43.65, lng: -79.38}}
+      defaultZoom={9}
+      gestureHandling={'greedy'}
+      fullscreenControl={false}>
+      <Directions />
+    </Map>
+  </APIProvider>
+);
+
+function Directions() {
+  const map = useMap();
+  const routesLibrary = useMapsLibrary('routes');
+  const [directionsService, setDirectionsService] = useState();
+  const [directionsRenderer, setDirectionsRenderer] = useState();
+  const [routes, setRoutes] = useState([]);
+  const [routeIndex, setRouteIndex] = useState(0);
+
+  // Initialize directions service and renderer
+  useEffect(() => {
+    if (!routesLibrary || !map) return;
+    setDirectionsService(new routesLibrary.DirectionsService());
+    setDirectionsRenderer(
+      new routesLibrary.DirectionsRenderer({
+        draggable: true,
+        map
+      })
+    );
+  }, [routesLibrary, map]);
+
+  // Handle direction changes
+  useEffect(() => {
+    if (!directionsRenderer) return;
+
+    const listener = directionsRenderer.addListener(
+      'directions_changed',
+      () => {
+        const result = directionsRenderer.getDirections();
+        if (result) {
+          setRoutes(result.routes);
+        }
+      }
+    );
+
+    return () => google.maps.event.removeListener(listener);
+  }, [directionsRenderer]);
+
+  // Calculate route
+  useEffect(() => {
+    if (!directionsService || !directionsRenderer) return;
+
+    directionsService
+      .route({
+        origin: '100 Front St, Toronto ON',
+        destination: '500 College St, Toronto ON',
+        travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: true
+      })
+      .then(response => {
+        directionsRenderer.setDirections(response);
+        setRoutes(response.routes);
+      });
+
+    return () => directionsRenderer.setMap(null);
+  }, [directionsService, directionsRenderer]);
+
+  // Update route index
+  useEffect(() => {
+    if (!directionsRenderer) return;
+    directionsRenderer.setRouteIndex(routeIndex);
+  }, [routeIndex, directionsRenderer]);
+
+  const selected = routes[routeIndex];
+  const leg = selected?.legs[0];
+
+  if (!leg) return null;
+
+  return (
+    <div className="directions">
+      <h2>{selected.summary}</h2>
+      <p>
+        {leg.start_address.split(',')[0]} to {leg.end_address.split(',')[0]}
+      </p>
+      <p>Distance: {leg.distance?.text}</p>
+      <p>Duration: {leg.duration?.text}</p>
+
+      <h2>Other Routes</h2>
+      <ul>
+        {routes.map((route, index) => (
+          <li key={route.summary}>
+            <button onClick={() => setRouteIndex(index)}>
+              {route.summary}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+<Note>
+  The Directions API requires the `'routes'` library to be loaded in the APIProvider.
+</Note>
+
+## Drawing Tools
+
+Allow users to draw shapes on the map:
+
+```tsx
+import React from 'react';
+import {APIProvider} from '@vis.gl/react-google-maps';
+import DrawingExample from './drawing-example';
+
+const App = () => {
+  return (
+    <APIProvider apiKey={API_KEY} libraries={['geometry', 'marker']}>
+      <DrawingExample />
+    </APIProvider>
+  );
+};
+```
+
+### Drawing Manager Component
+
+```tsx
+import {useEffect, useRef} from 'react';
+import {useMap, useMapsLibrary} from '@vis.gl/react-google-maps';
+
+function DrawingManager() {
+  const map = useMap();
+  const drawing = useMapsLibrary('drawing');
+  const drawingManagerRef = useRef(null);
+
+  useEffect(() => {
+    if (!map || !drawing) return;
+
+    const drawingManager = new drawing.DrawingManager({
+      drawingMode: google.maps.drawing.OverlayType.MARKER,
+      drawingControl: true,
+      drawingControlOptions: {
+        position: google.maps.ControlPosition.TOP_CENTER,
+        drawingModes: [
+          google.maps.drawing.OverlayType.MARKER,
+          google.maps.drawing.OverlayType.CIRCLE,
+          google.maps.drawing.OverlayType.POLYGON,
+          google.maps.drawing.OverlayType.POLYLINE,
+          google.maps.drawing.OverlayType.RECTANGLE,
+        ],
+      },
+    });
+
+    drawingManager.setMap(map);
+    drawingManagerRef.current = drawingManager;
+
+    return () => {
+      drawingManager.setMap(null);
+    };
+  }, [map, drawing]);
+
+  return null;
+}
+```
+
+## Place Autocomplete
+
+Implement place search with autocomplete:
+
+```tsx
+import React, {useState} from 'react';
+import {APIProvider, ControlPosition, Map} from '@vis.gl/react-google-maps';
+import AutocompleteControl from './autocomplete-control';
+
+const App = () => {
+  const [selectedPlace, setSelectedPlace] = useState(null);
+
+  return (
+    <APIProvider apiKey={API_KEY} version={'beta'}>
+      <Map
+        mapId={'49ae42fed52588c3'}
+        defaultZoom={3}
+        defaultCenter={{lat: 22.54992, lng: 0}}
+        gestureHandling={'greedy'}
+        disableDefaultUI={true}>
+        <AutocompleteControl
+          controlPosition={ControlPosition.TOP_LEFT}
+          onPlaceSelect={setSelectedPlace}
+        />
+      </Map>
+    </APIProvider>
+  );
+};
+```
+
+<Warning>
+  The Place Autocomplete web component requires the `beta` version of the Maps API.
+</Warning>
+
+## 3D Maps
+
+Create immersive 3D map experiences:
+
+```tsx
+import React, {useCallback, useState} from 'react';
+import {
+  APIProvider,
+  Map3D,
+  Map3DCameraChangedEvent
+} from '@vis.gl/react-google-maps';
+
+type Map3DCameraProps = {
+  center: google.maps.LatLngAltitudeLiteral;
+  range: number;
+  heading: number;
+  tilt: number;
+  roll: number;
+};
+
+const INITIAL_VIEW_PROPS: Map3DCameraProps = {
+  center: {lat: 37.72809, lng: -119.64473, altitude: 1300},
+  range: 5000,
+  heading: 61,
+  tilt: 69,
+  roll: 0
+};
+
+const Map3DExample = () => {
+  const [viewProps, setViewProps] = useState(INITIAL_VIEW_PROPS);
+
+  const handleCameraChange = useCallback((ev: Map3DCameraChangedEvent) => {
+    setViewProps(oldProps => ({...oldProps, ...ev.detail}));
+  }, []);
+
+  return (
+    <APIProvider apiKey={API_KEY}>
+      <Map3D
+        {...viewProps}
+        onCameraChanged={handleCameraChange}
+        defaultLabelsDisabled
+        mode="SATELLITE"
+        style={{width: '100vw', height: '100vh'}}
+      />
+    </APIProvider>
+  );
+};
+```
+
+### 3D Camera Controls
+
+The Map3D component provides full control over the camera:
+
+- `center` - Camera target position with altitude
+- `range` - Distance from the camera to the center point
+- `heading` - Camera heading in degrees (0-360)
+- `tilt` - Camera tilt in degrees (0-90)
+- `roll` - Camera roll in degrees
+
+## Geometry Library
+
+Use the geometry library for calculations:
+
+```tsx
+import {useMapsLibrary} from '@vis.gl/react-google-maps';
+
+function useGeometry() {
+  const geometry = useMapsLibrary('geometry');
+
+  if (!geometry) return null;
+
+  const distance = geometry.spherical.computeDistanceBetween(
+    new google.maps.LatLng(40.7128, -74.0060),
+    new google.maps.LatLng(34.0522, -118.2437)
+  );
+
+  const area = geometry.spherical.computeArea([
+    new google.maps.LatLng(25.774, -80.190),
+    new google.maps.LatLng(18.466, -66.118),
+    new google.maps.LatLng(32.321, -64.757)
+  ]);
+
+  return {distance, area};
+}
+```
+
+## Deck.gl Integration
+
+Integrate deck.gl for advanced visualizations:
+
+```tsx
+import {GoogleMapsOverlay} from '@deck.gl/google-maps';
+import {ScatterplotLayer} from '@deck.gl/layers';
+import {useMap} from '@vis.gl/react-google-maps';
+
+function DeckGLOverlay() {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const overlay = new GoogleMapsOverlay({
+      layers: [
+        new ScatterplotLayer({
+          id: 'scatterplot',
+          data: DATA,
+          getPosition: d => [d.lng, d.lat],
+          getFillColor: [255, 0, 0],
+          getRadius: 100
+        })
+      ]
+    });
+
+    overlay.setMap(map);
+
+    return () => overlay.setMap(null);
+  }, [map]);
+
+  return null;
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Map Component" icon="book" href="/api-reference/components/map">
+    Explore the Map component API
+  </Card>
+  
+  <Card title="useMap Hook" icon="code" href="/api-reference/hooks/use-map">
+    Learn about the useMap hook
+  </Card>
+  
+  <Card title="SSR & Frameworks" icon="server" href="/guides/ssr-and-frameworks">
+    Integrate with Next.js, Remix, and more
+  </Card>
+  
+  <Card title="deck.gl Integration" icon="layer-group" href="/guides/deckgl-integration">
+    Add advanced visualizations with deck.gl
+  </Card>
+</CardGroup>
+
+## Live Examples
+
+- [Marker Clustering](https://visgl.github.io/react-google-maps/examples/marker-clustering)
+- [Custom Marker Clustering](https://visgl.github.io/react-google-maps/examples/custom-marker-clustering)
+- [Heatmap](https://visgl.github.io/react-google-maps/examples/heatmap)
+- [Directions](https://visgl.github.io/react-google-maps/examples/directions)
+- [Drawing](https://visgl.github.io/react-google-maps/examples/drawing)
+- [Autocomplete](https://visgl.github.io/react-google-maps/examples/autocomplete)
+- [3D Maps](https://visgl.github.io/react-google-maps/examples/map-3d)
+- [Deck.gl Overlay](https://visgl.github.io/react-google-maps/examples/deckgl-overlay)

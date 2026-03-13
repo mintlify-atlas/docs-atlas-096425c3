@@ -1,0 +1,201 @@
+---
+title: 'useApiIsLoaded'
+description: 'Check if the Google Maps JavaScript API has finished loading'
+---
+
+The `useApiIsLoaded()` hook returns a boolean indicating whether the Maps JavaScript API has completed loading. Use this hook when you need to access the global `google.maps` namespace or wait for the API to be ready.
+
+## Returns
+
+<ResponseField name="isLoaded" type="boolean">
+  Returns `true` when the Maps JavaScript API has finished loading, `false` otherwise.
+</ResponseField>
+
+## Usage
+
+### Basic Usage
+
+```tsx
+import { useApiIsLoaded } from '@vis.gl/react-google-maps';
+import { useEffect } from 'react';
+
+const MyComponent = () => {
+  const apiIsLoaded = useApiIsLoaded();
+
+  useEffect(() => {
+    if (!apiIsLoaded) return;
+
+    // When the API is loaded, you can safely access google.maps
+    console.log('Google Maps API version:', google.maps.version);
+  }, [apiIsLoaded]);
+
+  return (
+    <div>
+      {apiIsLoaded ? 'API is ready!' : 'Loading...'}
+    </div>
+  );
+};
+
+const App = () => (
+  <APIProvider apiKey="YOUR_API_KEY">
+    <MyComponent />
+  </APIProvider>
+);
+```
+
+### Conditional Rendering
+
+```tsx
+const MapComponent = () => {
+  const apiIsLoaded = useApiIsLoaded();
+
+  if (!apiIsLoaded) {
+    return <div>Loading Google Maps...</div>;
+  }
+
+  return (
+    <Map 
+      defaultCenter={{lat: 37.7749, lng: -122.4194}} 
+      defaultZoom={10}
+    />
+  );
+};
+```
+
+### Accessing Global API
+
+Use the hook when you need to access features from the global `google.maps` namespace:
+
+```tsx
+const GeolocationComponent = () => {
+  const apiIsLoaded = useApiIsLoaded();
+  const [location, setLocation] = useState<google.maps.LatLng | null>(null);
+
+  useEffect(() => {
+    if (!apiIsLoaded) return;
+
+    // Access the global google.maps namespace
+    const geocoder = new google.maps.Geocoder();
+    
+    // Get user's location and convert to LatLng
+    navigator.geolocation.getCurrentPosition((position) => {
+      const latLng = new google.maps.LatLng(
+        position.coords.latitude,
+        position.coords.longitude
+      );
+      setLocation(latLng);
+    });
+  }, [apiIsLoaded]);
+
+  return location ? (
+    <div>Your location: {location.toJSON()}</div>
+  ) : (
+    <div>Getting your location...</div>
+  );
+};
+```
+
+### With Loading States
+
+```tsx
+const LoadingExample = () => {
+  const apiIsLoaded = useApiIsLoaded();
+  const map = useMap();
+
+  const isReady = apiIsLoaded && map;
+
+  return (
+    <div>
+      {!apiIsLoaded && <div>Loading API...</div>}
+      {apiIsLoaded && !map && <div>Initializing map...</div>}
+      {isReady && <div>Everything is ready!</div>}
+    </div>
+  );
+};
+```
+
+## Common Patterns
+
+### Combining with useMapsLibrary
+
+```tsx
+const LibraryLoader = () => {
+  const apiIsLoaded = useApiIsLoaded();
+  const placesLib = useMapsLibrary('places');
+
+  useEffect(() => {
+    if (!apiIsLoaded || !placesLib) {
+      console.log('Still loading...');
+      return;
+    }
+
+    // Both API and Places library are loaded
+    console.log('Ready to use Places API');
+  }, [apiIsLoaded, placesLib]);
+
+  return null;
+};
+```
+
+### Error Handling
+
+```tsx
+const SafeAPIAccess = () => {
+  const apiIsLoaded = useApiIsLoaded();
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!apiIsLoaded) return;
+
+    try {
+      // Safely access the API
+      const version = google.maps.version;
+      console.log('API version:', version);
+    } catch (err) {
+      setError('Failed to access Google Maps API');
+    }
+  }, [apiIsLoaded]);
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  return null;
+};
+```
+
+### Preloading Data
+
+```tsx
+const DataPreloader = () => {
+  const apiIsLoaded = useApiIsLoaded();
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    if (!apiIsLoaded) return;
+
+    // Preload data that requires the API
+    const loadData = async () => {
+      const geocoder = new google.maps.Geocoder();
+      
+      const result = await geocoder.geocode({
+        address: 'San Francisco, CA'
+      });
+      
+      setData(result.results[0]);
+    };
+
+    loadData();
+  }, [apiIsLoaded]);
+
+  return data ? <div>Data loaded</div> : <div>Loading...</div>;
+};
+```
+
+<Note>
+  This hook is a convenience wrapper around `useApiLoadingStatus()`. If you need more detailed information about the loading state (including error states), use `useApiLoadingStatus()` instead.
+</Note>
+
+<Tip>
+  The hook automatically updates when the API finishes loading, so your component will re-render when the API becomes available.
+</Tip>

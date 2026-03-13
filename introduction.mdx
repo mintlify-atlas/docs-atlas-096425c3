@@ -1,0 +1,121 @@
+---
+title: Introduction
+description: Learn about React Google Maps, a collection of React components and hooks for the Google Maps JavaScript API
+---
+
+`@vis.gl/react-google-maps` is a TypeScript / JavaScript library that provides a collection of React components and hooks for integrating the Google Maps JavaScript API into your React applications.
+
+Built with modern React patterns in mind, this library offers a declarative way to work with Google Maps, making it easier to create interactive mapping experiences while leveraging React's component model and state management.
+
+## What is React Google Maps?
+
+React Google Maps is a comprehensive library that bridges the gap between React's declarative programming model and the imperative Google Maps JavaScript API. It provides:
+
+- **React Components**: Pre-built components for maps, markers, info windows, and more
+- **React Hooks**: Hooks to access Google Maps services and libraries
+- **TypeScript Support**: Full TypeScript definitions out of the box
+- **Modern React**: Built for React 16.8+ with hooks and functional components
+
+## Design Philosophy
+
+The Google Maps JavaScript API follows an **imperative programming model** where you instruct the map to do something, and it executes commands while maintaining its own internal state. However, React applications typically need a **single source of truth** with data flowing down the component hierarchy.
+
+`@vis.gl/react-google-maps` provides a **reactive wrapper** that bridges these two paradigms:
+
+- The map maintains control over complex interactions (panning, zooming, touch events)
+- Your application can synchronize map state with other React components
+- Components can work in both controlled and uncontrolled modes
+- Multiple maps can be synchronized side by side
+- External UI elements can trigger map updates and respond to map changes
+
+<Note>
+  By default, camera props (center, zoom, heading, tilt) are read as initial values, allowing users to interact freely with the map. For full control, the `Map` component can be used as a fully controlled component.
+</Note>
+
+This design philosophy makes it possible to:
+
+- Keep two maps in sync as users interact with one
+- Update UI elements based on the currently visible map region
+- Integrate data visualization overlays (like deck.gl)
+- Maintain application state separate from map state
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Declarative Components" icon="react">
+    Use familiar React patterns with components like `<Map>`, `<AdvancedMarker>`, and `<InfoWindow>`
+  </Card>
+  
+  <Card title="TypeScript Ready" icon="code">
+    Full TypeScript support with comprehensive type definitions included
+  </Card>
+  
+  <Card title="Dynamic Library Loading" icon="download">
+    Load additional Google Maps libraries on-demand with the `useMapsLibrary` hook
+  </Card>
+  
+  <Card title="Flexible Control" icon="sliders">
+    Choose between controlled and uncontrolled components based on your needs
+  </Card>
+</CardGroup>
+
+## Quick Example
+
+Here's a simple example showing how easy it is to render a map with a marker:
+
+```tsx
+import {APIProvider, Map, AdvancedMarker} from '@vis.gl/react-google-maps';
+
+function App() {
+  const position = {lat: 53.54992, lng: 10.00678};
+
+  return (
+    <APIProvider apiKey={'YOUR_API_KEY_HERE'}>
+      <Map 
+        defaultCenter={position} 
+        defaultZoom={10} 
+        mapId="DEMO_MAP_ID"
+      >
+        <AdvancedMarker position={position} />
+      </Map>
+    </APIProvider>
+  );
+}
+```
+
+<Warning>
+  You'll need a Google Maps API key to use this library. See the [Installation](/installation) guide for details on obtaining one.
+</Warning>
+
+## Use Cases
+
+React Google Maps is perfect for:
+
+- **Location-based applications**: Store locators, delivery tracking, real estate listings
+- **Data visualization**: Heatmaps, marker clustering, custom overlays
+- **Interactive maps**: User-driven navigation, route planning, area selection
+- **Multi-map interfaces**: Comparing locations, synchronized map views
+- **Geospatial dashboards**: Combining maps with other React components and state
+
+## Browser Support
+
+This library follows the same browser support policy as the Google Maps JavaScript API. Generally, the **last two versions of major browsers** are officially supported:
+
+- Chrome
+- Firefox
+- Safari
+- Edge
+
+While older browsers may work, active support and testing focuses on recent versions.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Get started by installing the library and setting up your API key
+  </Card>
+  
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Build your first map in minutes with our step-by-step guide
+  </Card>
+</CardGroup>

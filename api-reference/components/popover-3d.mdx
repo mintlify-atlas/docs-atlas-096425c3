@@ -1,0 +1,310 @@
+---
+title: Popover3D
+description: Component to display information popovers on 3D maps
+---
+
+# Popover3D
+
+The `Popover3D` component displays popup windows with custom content on 3D maps, either anchored to a marker or at a specific position.
+
+## Usage
+
+```tsx
+import {Map3D, Marker3D, Popover3D, MapMode} from '@vis.gl/react-google-maps';
+
+const [open, setOpen] = useState(false);
+const [markerRef, setMarkerRef] = useState(null);
+
+<Map3D 
+  mode={MapMode.SATELLITE}
+  defaultCenter={{lat: 37.7749, lng: -122.4194, altitude: 0}}
+  defaultRange={1000}
+>
+  <Marker3D
+    ref={setMarkerRef}
+    position={{lat: 37.7749, lng: -122.4194}}
+    label="SF"
+    onClick={() => setOpen(true)}
+  />
+  <Popover3D
+    anchor={markerRef}
+    open={open}
+    onClose={() => setOpen(false)}
+  >
+    <div>
+      <h3>San Francisco</h3>
+      <p>Welcome to San Francisco!</p>
+    </div>
+  </Popover3D>
+</Map3D>
+```
+
+## Props
+
+### Positioning
+
+<ParamField path="anchor" type="google.maps.maps3d.Marker3DInteractiveElement | null">
+  Interactive 3D marker to anchor the popover to.
+  
+  Use with a ref from `Marker3D` that has `onClick` defined.
+</ParamField>
+
+<ParamField path="anchorId" type="string">
+  String ID of a Marker3DInteractiveElement to anchor to.
+  
+  Alternative to using `anchor` prop with ref.
+</ParamField>
+
+<ParamField path="position" type="google.maps.LatLngLiteral | google.maps.LatLngAltitudeLiteral">
+  Map position for the popover when not anchored to a marker.
+  
+  Example: `{lat: 37.7749, lng: -122.4194}` or with altitude
+</ParamField>
+
+<ParamField path="altitudeMode" type="AltitudeMode">
+  How altitude is interpreted.
+  
+  - `AltitudeMode.ABSOLUTE`: Relative to sea level
+  - `AltitudeMode.CLAMP_TO_GROUND`: On the ground (default)
+  - `AltitudeMode.RELATIVE_TO_GROUND`: Above ground
+  - `AltitudeMode.RELATIVE_TO_MESH`: Above terrain/buildings
+  
+  Import `AltitudeMode` from `'@vis.gl/react-google-maps'`
+</ParamField>
+
+### Display
+
+<ParamField path="open" type="boolean">
+  Whether the popover is visible.
+  
+  Default: `false`
+</ParamField>
+
+<ParamField path="children" type="React.ReactNode">
+  Content to display inside the popover.
+</ParamField>
+
+<ParamField path="lightDismissDisabled" type="boolean">
+  Disable closing the popover when clicking outside.
+  
+  Default: `false`
+</ParamField>
+
+### Events
+
+<ParamField path="onClose" type="(e: Event) => void">
+  Fired when the popover is closed via light dismiss (clicking outside).
+</ParamField>
+
+## Examples
+
+### Popover Anchored to Marker
+
+```tsx
+import {Marker3D, Popover3D} from '@vis.gl/react-google-maps';
+
+const MarkerWithPopover = () => {
+  const [markerRef, setMarkerRef] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <Marker3D
+        ref={setMarkerRef}
+        position={{lat: 37.7749, lng: -122.4194}}
+        label="SF"
+        onClick={() => setIsOpen(true)}
+        title="Click to open info"
+      />
+      <Popover3D
+        anchor={markerRef}
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+      >
+        <div style={{padding: '15px', maxWidth: '300px'}}>
+          <h3>San Francisco</h3>
+          <p>Population: 873,965</p>
+          <p>Known for the Golden Gate Bridge</p>
+        </div>
+      </Popover3D>
+    </>
+  );
+};
+```
+
+### Popover at Position
+
+```tsx
+const [position, setPosition] = useState(null);
+
+<Map3D
+  mode={MapMode.SATELLITE}
+  defaultCenter={{lat: 37.7749, lng: -122.4194, altitude: 0}}
+  defaultRange={1000}
+  onClick={(e) => {
+    if (e.position) {
+      setPosition(e.position);
+    }
+  }}
+>
+  {position && (
+    <Popover3D
+      position={position}
+      open={true}
+      onClose={() => setPosition(null)}
+    >
+      <div>
+        Clicked location:
+        <br />
+        Lat: {position.lat.toFixed(4)}
+        <br />
+        Lng: {position.lng.toFixed(4)}
+      </div>
+    </Popover3D>
+  )}
+</Map3D>
+```
+
+### Popover with Altitude
+
+```tsx
+import {Popover3D, AltitudeMode} from '@vis.gl/react-google-maps';
+
+<Popover3D
+  position={{lat: 37.7749, lng: -122.4194, altitude: 200}}
+  altitudeMode={AltitudeMode.RELATIVE_TO_GROUND}
+  open={true}
+>
+  <div>Floating 200m above ground</div>
+</Popover3D>
+```
+
+### Popover Using Marker ID
+
+```tsx
+<Marker3D
+  id="marker-sf"
+  position={{lat: 37.7749, lng: -122.4194}}
+  label="SF"
+  onClick={() => setOpen(true)}
+/>
+
+<Popover3D
+  anchorId="marker-sf"
+  open={open}
+  onClose={() => setOpen(false)}
+>
+  <div>Anchored by ID</div>
+</Popover3D>
+```
+
+### Rich Content Popover
+
+```tsx
+<Popover3D
+  anchor={markerRef}
+  open={isOpen}
+  onClose={() => setIsOpen(false)}
+>
+  <div style={{
+    background: 'white',
+    padding: '20px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+    maxWidth: '350px'
+  }}>
+    <img 
+      src="/location-photo.jpg" 
+      style={{width: '100%', borderRadius: '4px', marginBottom: '10px'}}
+    />
+    <h2 style={{margin: '0 0 10px 0'}}>Golden Gate Bridge</h2>
+    <p style={{margin: '0 0 10px 0', color: '#666'}}>
+      An iconic suspension bridge spanning the Golden Gate strait.
+    </p>
+    <button 
+      onClick={() => console.log('Get directions')}
+      style={{
+        background: '#4285F4',
+        color: 'white',
+        border: 'none',
+        padding: '10px 20px',
+        borderRadius: '4px',
+        cursor: 'pointer'
+      }}
+    >
+      Get Directions
+    </button>
+  </div>
+</Popover3D>
+```
+
+### Persistent Popover
+
+```tsx
+<Popover3D
+  anchor={markerRef}
+  open={true}
+  lightDismissDisabled={true}
+>
+  <div>
+    <p>This popover won't close when clicking outside</p>
+    <button onClick={handleClose}>Close</button>
+  </div>
+</Popover3D>
+```
+
+### Multiple Popovers
+
+```tsx
+const locations = [
+  {id: 1, position: {lat: 37.7749, lng: -122.4194}, name: 'SF'},
+  {id: 2, position: {lat: 37.7849, lng: -122.4094}, name: 'Oakland'}
+];
+
+const [selectedId, setSelectedId] = useState(null);
+const markerRefs = useRef({});
+
+{locations.map(loc => (
+  <React.Fragment key={loc.id}>
+    <Marker3D
+      ref={(el) => markerRefs.current[loc.id] = el}
+      position={loc.position}
+      label={loc.name}
+      onClick={() => setSelectedId(loc.id)}
+    />
+    <Popover3D
+      anchor={markerRefs.current[loc.id]}
+      open={selectedId === loc.id}
+      onClose={() => setSelectedId(null)}
+    >
+      <div>
+        <h3>{loc.name}</h3>
+        <p>Location details...</p>
+      </div>
+    </Popover3D>
+  </React.Fragment>
+))}
+```
+
+## Notes
+
+- Must be a child of a `Map3D` component
+- When anchored to a marker, the marker must be a `Marker3DInteractiveElement` (created by adding `onClick` to `Marker3D`)
+- Content is rendered via React portals directly into the popover element
+- The popover automatically positions itself near the anchor or position
+- Light dismiss (closing when clicking outside) can be disabled with `lightDismissDisabled`
+
+## Differences from InfoWindow
+
+`Popover3D` is the 3D equivalent of `InfoWindow` with some differences:
+
+- Works with 3D maps (`Map3D`) instead of 2D maps (`Map`)
+- Uses `Marker3DInteractiveElement` instead of regular markers
+- Supports altitude positioning
+- Different API structure (native web component vs Maps API)
+
+## Related Components
+
+- [`Map3D`](/api-reference/components/map-3d) - 3D map container
+- [`Marker3D`](/api-reference/components/marker-3d) - 3D markers
+- [`InfoWindow`](/api-reference/components/info-window) - Info windows for 2D maps

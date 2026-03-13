@@ -1,0 +1,106 @@
+---
+title: Examples Overview
+description: Explore live examples demonstrating various features and use cases of React Google Maps
+---
+
+The React Google Maps library comes with a comprehensive collection of working examples that demonstrate real-world implementations. All examples are available in the [GitHub repository](https://github.com/visgl/react-google-maps/tree/main/examples) and many have live demos you can interact with.
+
+## Getting Started with Examples
+
+Each example is fully self-contained and can be run independently:
+
+```bash
+cd examples/[example-name]
+npm install
+npm start
+```
+
+During development, you can also run examples with the local library source:
+
+```bash
+npm run start-local
+```
+
+## Example Categories
+
+<CardGroup cols={2}>
+  <Card title="Basic Map" icon="map" href="/examples/basic-map">
+    Learn how to create a simple map with minimal configuration
+  </Card>
+  
+  <Card title="Markers & InfoWindows" icon="location-dot" href="/examples/markers">
+    Display markers, pins, and information windows on your map
+  </Card>
+  
+  <Card title="Advanced Features" icon="wand-magic-sparkles" href="/examples/advanced-features">
+    Explore advanced capabilities like clustering, heatmaps, and 3D maps
+  </Card>
+  
+  <Card title="Directions & Routes" icon="route" href="/examples/advanced-features#directions">
+    Calculate and display routes with the Directions API
+  </Card>
+  
+  <Card title="Place Autocomplete" icon="magnifying-glass" href="/examples/advanced-features#autocomplete">
+    Implement place search with autocomplete functionality
+  </Card>
+  
+  <Card title="Drawing Tools" icon="pen" href="/examples/advanced-features#drawing">
+    Allow users to draw shapes and annotations on the map
+  </Card>
+  
+  <Card title="Heatmaps" icon="fire" href="/examples/advanced-features#heatmap">
+    Visualize data density with heatmap layers
+  </Card>
+  
+  <Card title="Marker Clustering" icon="object-group" href="/examples/advanced-features#clustering">
+    Efficiently display thousands of markers with clustering
+  </Card>
+</CardGroup>
+
+## Live Examples Website
+
+Many of these examples are available to explore live at:
+
+[https://visgl.github.io/react-google-maps/examples](https://visgl.github.io/react-google-maps/examples)
+
+The live examples site allows you to:
+- Interact with the examples in real-time
+- View the source code
+- See the results immediately
+- Open examples in CodeSandbox for experimentation
+
+## Example Structure
+
+Each example typically includes:
+
+- `src/app.tsx` - Main application component with the map implementation
+- `src/control-panel.tsx` - Optional UI controls for the example
+- `vite.config.js` - Build configuration
+- `package.json` - Dependencies and scripts
+
+## CodeSandbox Quick Start
+
+When browsing examples on GitHub, you can quickly open any example in CodeSandbox by replacing `github.com` with `githubbox.com` in the URL.
+
+For example:
+```
+https://github.com/visgl/react-google-maps/tree/main/examples/basic-map
+```
+
+Becomes:
+```
+https://githubbox.com/visgl/react-google-maps/tree/main/examples/basic-map
+```
+
+## Framework Examples
+
+We also provide examples for popular React frameworks:
+
+- **Next.js** - App Router and Pages Router implementations
+- **Remix** - Full-stack React framework integration
+
+These framework-specific examples demonstrate best practices for server-side rendering and routing.
+
+## Contributing Examples
+
+Interested in contributing a new example? Check out our [guide on writing examples](https://visgl.github.io/react-google-maps/docs/guides/writing-examples) to learn how to create and submit your own.

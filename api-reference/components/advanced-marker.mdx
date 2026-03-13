@@ -1,0 +1,271 @@
+---
+title: AdvancedMarker
+description: Component to display advanced, customizable markers on cloud-styled maps
+---
+
+# AdvancedMarker
+
+The `AdvancedMarker` component displays highly customizable markers on maps using cloud-based styling. It supports custom HTML content, improved performance, and advanced features like collision detection.
+
+<Note>
+  AdvancedMarker requires a map with a `mapId` specified. It only works on cloud-styled maps.
+</Note>
+
+## Usage
+
+```tsx
+import {Map, AdvancedMarker} from '@vis.gl/react-google-maps';
+
+const MapWithMarker = () => (
+  <Map 
+    mapId="YOUR_MAP_ID"
+    defaultCenter={{lat: 37.7749, lng: -122.4194}} 
+    defaultZoom={12}
+  >
+    <AdvancedMarker position={{lat: 37.7749, lng: -122.4194}} />
+  </Map>
+);
+```
+
+## Props
+
+### Positioning
+
+<ParamField path="position" type="google.maps.LatLngLiteral | google.maps.LatLngAltitudeLiteral">
+  The position of the marker. For 3D maps with tilt, you can include altitude.
+  
+  Example: `{lat: 37.7749, lng: -122.4194, altitude: 100}`
+</ParamField>
+
+<ParamField path="zIndex" type="number">
+  Z-index determines the order markers appear. Higher values are in front.
+  
+  Also affects collision priority when using `CollisionBehavior.OPTIONAL_AND_HIDES_LOWER_PRIORITY`.
+</ParamField>
+
+<ParamField path="collisionBehavior" type="CollisionBehavior">
+  How the marker behaves when colliding with other markers or map labels.
+  
+  - `CollisionBehavior.REQUIRED` - Always show
+  - `CollisionBehavior.REQUIRED_AND_HIDES_OPTIONAL` - Always show, hides optional markers
+  - `CollisionBehavior.OPTIONAL_AND_HIDES_LOWER_PRIORITY` - May hide based on priority
+  
+  Import `CollisionBehavior` from `'@vis.gl/react-google-maps'`
+</ParamField>
+
+### Anchoring
+
+<ParamField path="anchorLeft" type="string">
+  CSS length-percentage value to offset the anchor point horizontally.
+  
+  Default: `'-50%'` (centers horizontally)
+  
+  Example: `'0'`, `'-100%'`, `'calc(-50% - 10px)'`
+</ParamField>
+
+<ParamField path="anchorTop" type="string">
+  CSS length-percentage value to offset the anchor point vertically.
+  
+  Default: `'-100%'` (anchors at bottom)
+  
+  Example: `'0'`, `'-50%'`, `'calc(-100% - 5px)'`
+</ParamField>
+
+<ParamField path="anchorPoint" type="AdvancedMarkerAnchorPoint | [string, string]" deprecated>
+  Legacy anchor point system. Use `anchorLeft` and `anchorTop` instead.
+  
+  Predefined positions:
+  - `AdvancedMarkerAnchorPoint.TOP_LEFT`
+  - `AdvancedMarkerAnchorPoint.TOP_CENTER`
+  - `AdvancedMarkerAnchorPoint.BOTTOM_CENTER` (default)
+  - etc.
+</ParamField>
+
+### Content & Styling
+
+<ParamField path="children" type="React.ReactNode">
+  Custom HTML content for the marker. Can be any React component.
+  
+  If using a `<Pin>` component, it will use the default Google Maps pin styling.
+</ParamField>
+
+<ParamField path="className" type="string">
+  CSS class name for the marker's content element.
+</ParamField>
+
+<ParamField path="style" type="React.CSSProperties">
+  Inline styles for the marker's content element.
+</ParamField>
+
+<ParamField path="title" type="string">
+  Accessibility text for screen readers.
+</ParamField>
+
+### Interaction
+
+<ParamField path="clickable" type="boolean">
+  Whether the marker is clickable and keyboard-accessible.
+  
+  Default: `true` if onClick/onMouseEnter/onMouseLeave are provided
+</ParamField>
+
+<ParamField path="draggable" type="boolean">
+  Whether the marker can be dragged. Only works for 2D markers (no altitude).
+  
+  Default: `true` if drag event handlers are provided
+</ParamField>
+
+### Events
+
+<ParamField path="onClick" type="(e: google.maps.MapMouseEvent) => void">
+  Fired when the marker is clicked.
+</ParamField>
+
+<ParamField path="onMouseEnter" type="(e: MouseEvent) => void">
+  Fired when the mouse enters the marker.
+</ParamField>
+
+<ParamField path="onMouseLeave" type="(e: MouseEvent) => void">
+  Fired when the mouse leaves the marker.
+</ParamField>
+
+<ParamField path="onDrag" type="(e: google.maps.MapMouseEvent) => void">
+  Fired repeatedly while dragging.
+</ParamField>
+
+<ParamField path="onDragStart" type="(e: google.maps.MapMouseEvent) => void">
+  Fired when dragging starts.
+</ParamField>
+
+<ParamField path="onDragEnd" type="(e: google.maps.MapMouseEvent) => void">
+  Fired when dragging ends.
+</ParamField>
+
+## Examples
+
+### Default Marker with Pin
+
+```tsx
+import {AdvancedMarker, Pin} from '@vis.gl/react-google-maps';
+
+<AdvancedMarker position={{lat: 37.7749, lng: -122.4194}}>
+  <Pin 
+    background="#0f9d58"
+    borderColor="#006425"
+    glyphColor="#60d98f"
+  />
+</AdvancedMarker>
+```
+
+### Custom HTML Marker
+
+```tsx
+<AdvancedMarker 
+  position={{lat: 37.7749, lng: -122.4194}}
+  anchorLeft="-20px"
+  anchorTop="-40px"
+>
+  <div style={{
+    background: 'white',
+    padding: '10px',
+    borderRadius: '8px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+  }}>
+    <img src="/icon.png" width={32} height={32} />
+    <div>Custom Marker</div>
+  </div>
+</AdvancedMarker>
+```
+
+### Draggable Marker
+
+```tsx
+const [position, setPosition] = useState({lat: 37.7749, lng: -122.4194});
+
+<AdvancedMarker 
+  position={position}
+  draggable
+  onDragEnd={(e) => {
+    if (e.latLng) {
+      setPosition({
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng()
+      });
+    }
+  }}
+/>
+```
+
+### Marker with Collision Behavior
+
+```tsx
+import {AdvancedMarker, CollisionBehavior} from '@vis.gl/react-google-maps';
+
+<AdvancedMarker 
+  position={{lat: 37.7749, lng: -122.4194}}
+  collisionBehavior={CollisionBehavior.REQUIRED_AND_HIDES_OPTIONAL}
+  zIndex={100}
+/>
+```
+
+### Interactive Marker with InfoWindow
+
+```tsx
+import {AdvancedMarker, InfoWindow, useAdvancedMarkerRef} from '@vis.gl/react-google-maps';
+
+const InteractiveMarker = () => {
+  const [markerRef, marker] = useAdvancedMarkerRef();
+  const [infoOpen, setInfoOpen] = useState(false);
+
+  return (
+    <>
+      <AdvancedMarker
+        ref={markerRef}
+        position={{lat: 37.7749, lng: -122.4194}}
+        onClick={() => setInfoOpen(true)}
+      />
+      {infoOpen && (
+        <InfoWindow
+          anchor={marker}
+          onCloseClick={() => setInfoOpen(false)}
+        >
+          <div>
+            <h3>San Francisco</h3>
+            <p>Welcome to San Francisco!</p>
+          </div>
+        </InfoWindow>
+      )}
+    </>
+  );
+};
+```
+
+### 3D Marker with Altitude
+
+```tsx
+<AdvancedMarker 
+  position={{lat: 37.7749, lng: -122.4194, altitude: 100}}
+>
+  <Pin background="#4285F4" />
+</AdvancedMarker>
+```
+
+## Notes
+
+- Requires a map with `mapId` specified
+- Custom HTML content is rendered via React portals
+- The default anchor point is at the bottom-center of the marker
+- For altitude-based markers, dragging is not supported
+- Collision behavior only affects labels on vector maps
+
+## Related Components
+
+- [`Pin`](/api-reference/components/pin) - Customize the default marker pin
+- [`InfoWindow`](/api-reference/components/info-window) - Show info attached to markers
+- [`Marker`](/api-reference/components/marker) - Legacy marker for all map types
+
+## Related Components
+
+- [`Map`](/api-reference/components/map) - Container for the map
+- [`InfoWindow`](/api-reference/components/info-window) - Display info windows on markers
+- [`Pin`](/api-reference/components/pin) - Customize marker appearance

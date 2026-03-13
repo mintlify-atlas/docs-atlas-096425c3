@@ -1,0 +1,216 @@
+---
+title: 'useMapsLibrary'
+description: 'Load and access Google Maps JavaScript API libraries on demand'
+---
+
+The `useMapsLibrary()` hook provides access to the different [Maps JavaScript API libraries](https://developers.google.com/maps/documentation/javascript/libraries). This is the React-friendly version of the `google.maps.importLibrary()` function.
+
+## Parameters
+
+<ParamField path="name" type="string" required>
+  The name of the library to load. Available libraries include:
+  - `core` - Core Google Maps functionality
+  - `maps` - Map class and overlays
+  - `places` - Places API and autocomplete
+  - `geocoding` - Geocoding services
+  - `routes` - Directions and distance matrix
+  - `marker` - Advanced markers
+  - `geometry` - Geometry utilities
+  - `elevation` - Elevation services
+  - `streetView` - Street View functionality
+  - `journeySharing` - Journey sharing features
+  - `drawing` - Drawing tools
+  - `visualization` - Data visualization layers
+  - `maps3d` - 3D map elements
+</ParamField>
+
+## Returns
+
+<ResponseField name="library" type="google.maps.XxxLibrary | null">
+  The requested library object, or `null` if it hasn't finished loading yet.
+  
+  The hook automatically triggers loading of the specified library and updates when the library becomes available.
+</ResponseField>
+
+## Usage
+
+### Loading the Places Library
+
+```tsx
+import { useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
+import { useEffect, useState } from 'react';
+
+const PlacesSearch = () => {
+  const map = useMap();
+  const placesLib = useMapsLibrary('places');
+  const [placesService, setPlacesService] = useState<google.maps.places.PlacesService | null>(null);
+
+  useEffect(() => {
+    if (!placesLib || !map) return;
+
+    // Initialize the PlacesService once the library is loaded
+    const service = new placesLib.PlacesService(map);
+    setPlacesService(service);
+  }, [placesLib, map]);
+
+  useEffect(() => {
+    if (!placesService) return;
+
+    // Use the Places service
+    placesService.findPlaceFromQuery(
+      {
+        query: 'Museum of Contemporary Art Australia',
+        fields: ['name', 'geometry'],
+      },
+      (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+          console.log('Found place:', results[0]);
+        }
+      }
+    );
+  }, [placesService]);
+
+  return null;
+};
+
+const App = () => (
+  <APIProvider apiKey="YOUR_API_KEY">
+    <Map defaultCenter={{lat: -33.8688, lng: 151.2093}} defaultZoom={12}>
+      <PlacesSearch />
+    </Map>
+  </APIProvider>
+);
+```
+
+### Loading the Geocoding Library
+
+```tsx
+const GeocodingExample = () => {
+  const geocodingLib = useMapsLibrary('geocoding');
+  const [address, setAddress] = useState<string>('');
+
+  useEffect(() => {
+    if (!geocodingLib) return;
+
+    const geocoder = new geocodingLib.Geocoder();
+    
+    geocoder.geocode(
+      { address: '1600 Amphitheatre Parkway, Mountain View, CA' },
+      (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          const location = results[0].geometry.location;
+          setAddress(`Coordinates: ${location.lat()}, ${location.lng()}`);
+        }
+      }
+    );
+  }, [geocodingLib]);
+
+  return <div>{address}</div>;
+};
+```
+
+### Loading the Geometry Library
+
+```tsx
+const DistanceCalculator = () => {
+  const geometryLib = useMapsLibrary('geometry');
+  const [distance, setDistance] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!geometryLib) return;
+
+    const point1 = new google.maps.LatLng(37.7749, -122.4194); // San Francisco
+    const point2 = new google.maps.LatLng(34.0522, -118.2437); // Los Angeles
+
+    // Calculate distance in meters
+    const distanceInMeters = geometryLib.spherical.computeDistanceBetween(
+      point1,
+      point2
+    );
+
+    setDistance(distanceInMeters / 1000); // Convert to kilometers
+  }, [geometryLib]);
+
+  return (
+    <div>
+      {distance && `Distance: ${distance.toFixed(2)} km`}
+    </div>
+  );
+};
+```
+
+### Loading the Marker Library
+
+```tsx
+const AdvancedMarkerExample = () => {
+  const map = useMap();
+  const markerLib = useMapsLibrary('marker');
+
+  useEffect(() => {
+    if (!map || !markerLib) return;
+
+    // Create an advanced marker
+    const marker = new markerLib.AdvancedMarkerElement({
+      map,
+      position: {lat: 37.7749, lng: -122.4194},
+      title: 'San Francisco'
+    });
+
+    return () => {
+      marker.map = null;
+    };
+  }, [map, markerLib]);
+
+  return null;
+};
+```
+
+## Common Patterns
+
+### Multiple Libraries
+
+Load multiple libraries in a single component:
+
+```tsx
+const MultiLibraryComponent = () => {
+  const map = useMap();
+  const placesLib = useMapsLibrary('places');
+  const geometryLib = useMapsLibrary('geometry');
+  const markerLib = useMapsLibrary('marker');
+
+  const allLibrariesLoaded = placesLib && geometryLib && markerLib;
+
+  useEffect(() => {
+    if (!allLibrariesLoaded || !map) return;
+
+    // Use multiple libraries together
+    // ...
+  }, [allLibrariesLoaded, map]);
+
+  return null;
+};
+```
+
+### Conditional Library Loading
+
+```tsx
+const ConditionalLibrary = ({ useGeocoding }: { useGeocoding: boolean }) => {
+  const geocodingLib = useMapsLibrary(useGeocoding ? 'geocoding' : null);
+
+  useEffect(() => {
+    if (!geocodingLib) return;
+
+    // Use geocoding when enabled
+  }, [geocodingLib]);
+
+  return null;
+};
+```
+
+<Note>
+  The `useMapsLibrary()` hook must be used within a component tree wrapped by an `APIProvider`. The hook will automatically handle loading the library and trigger a re-render when the library becomes available.
+</Note>
+
+<Tip>
+  Libraries are loaded on demand and cached. Multiple calls to `useMapsLibrary()` with the same library name will return the same library instance without triggering duplicate loads.
+</Tip>
